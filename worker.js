@@ -1,8 +1,8 @@
 // =================================================================================
 //  項目: multi-provider-image-generator
-//  版本: 8.6.0 (智能自適應高清優化)
+//  版本: 8.6.1 (移除成人內容功能)
 //  作者: Enhanced by AI Assistant
-//  日期: 2025-12-04
+//  日期: 2025-12-10
 //
 //  完整功能:
 //  ✅ 17個模型 (Flux + SD3)
@@ -10,14 +10,13 @@
 //  ✅ 三檔質量模式
 //  ✅ 智能提示詞分析
 //  ✅ 模型專屬優化
-//  ✅ NSFW 成人內容
 //  ✅ 歷史記錄系統
 //  ✅ OpenAI 兼容 API
 // =================================================================================
 
 const CONFIG = {
   PROJECT_NAME: "multi-provider-image-generator",
-  PROJECT_VERSION: "8.6.0",
+  PROJECT_VERSION: "8.6.1",
   
   API_MASTER_KEY: "1",
   
@@ -32,7 +31,6 @@ const CONFIG = {
       default: true,
       description: "完全免費的 AI 圖像生成服務 - 支持 Flux & SD3 系列 + 智能自適應高清",
       features: {
-        nsfw: true,
         private_mode: true,
         custom_size: true,
         seed_control: true,
@@ -546,7 +544,6 @@ class PollinationsProvider {
             nologo = true,
             privateMode = true,
             style = "none",
-            nsfw = false,
             autoOptimize = true,
             autoHD = true,
             qualityMode = 'standard'
@@ -672,11 +669,6 @@ class PollinationsProvider {
                     params.append('enhance', enhance.toString());
                     params.append('private', privateMode.toString());
                     
-                    if (nsfw) {
-                        params.append('nsfw', 'true');
-                        params.append('safe', 'false');
-                    }
-                    
                     if (finalGuidance !== 7.5) {
                         params.append('guidance', finalGuidance.toString());
                     }
@@ -716,7 +708,6 @@ class PollinationsProvider {
                                 requested_model: model,
                                 seed: currentSeed,
                                 style: style,
-                                nsfw: nsfw,
                                 steps: finalSteps,
                                 guidance: finalGuidance,
                                 width: finalWidth,
@@ -856,7 +847,7 @@ export default {
         return new Response(JSON.stringify({
           project: CONFIG.PROJECT_NAME,
           version: CONFIG.PROJECT_VERSION,
-          features: ['17 Models', '12 Styles', '3 Quality Modes', 'Smart Analysis', 'Auto HD', 'NSFW', 'History'],
+          features: ['17 Models', '12 Styles', '3 Quality Modes', 'Smart Analysis', 'Auto HD', 'History'],
           endpoints: [
             '/v1/images/generations',
             '/v1/chat/completions',
@@ -924,7 +915,6 @@ async function handleChatCompletions(request) {
             nologo: body.nologo !== false,
             privateMode: body.private !== false,
             style: body.style || "none",
-            nsfw: body.nsfw === true,
             autoOptimize: body.auto_optimize !== false,
             autoHD: body.auto_hd !== false,
             qualityMode: body.quality_mode || 'standard'
@@ -1042,7 +1032,6 @@ async function handleImageGenerations(request) {
             nologo: body.nologo !== false,
             privateMode: body.private !== false,
             style: body.style || "none",
-            nsfw: body.nsfw === true,
             autoOptimize: body.auto_optimize !== false,
             autoHD: body.auto_hd !== false,
             qualityMode: body.quality_mode || 'standard'
@@ -1063,7 +1052,6 @@ async function handleImageGenerations(request) {
                 style: r.style,
                 quality_mode: r.quality_mode,
                 prompt_complexity: r.prompt_complexity,
-                nsfw: r.nsfw,
                 steps: r.steps,
                 guidance: r.guidance,
                 auto_optimized: r.auto_optimized,
@@ -1152,6 +1140,7 @@ function handleStylesRequest() {
       headers: corsHeaders({ 'Content-Type': 'application/json' })
     });
 }
+
 function handleUI(request) {
   const origin = new URL(request.url).origin;
   
@@ -1337,16 +1326,6 @@ function handleUI(request) {
       .checkbox-group input[type="checkbox"] {
         width: auto;
         margin: 0;
-      }
-      
-      .nsfw-warning {
-        background: rgba(239, 68, 68, 0.2);
-        border: 1px solid #ef4444;
-        padding: 12px;
-        border-radius: 8px;
-        margin-top: 10px;
-        font-size: 12px;
-        color: #fca5a5;
       }
       
       .quality-mode-selector {
@@ -1752,7 +1731,7 @@ function handleUI(request) {
         
         <div id="generate-tab" class="tab-content active">
             <div class="info-card">
-                <h4>🚀 v8.6.0 新功能</h4>
+                <h4>🚀 v8.6.1 更新</h4>
                 <p>
                     <strong>🎨 三檔質量模式:</strong> 經濟/標準/超高清自由切換<br>
                     <strong>🧠 智能分析:</strong> 自動識別提示詞複雜度並推薦最佳模式<br>
@@ -1871,16 +1850,6 @@ function handleUI(request) {
                         <input type="checkbox" id="private" checked>
                         <label for="private">私密模式</label>
                     </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="nsfw" onchange="toggleNSFWWarning()">
-                        <label for="nsfw">🔞 成人內容</label>
-                    </div>
-                    
-                    <div id="nsfwWarning" class="nsfw-warning" style="display:none;">
-                        <strong>⚠️ NSFW 警告</strong>
-                        <p style="margin-top:6px;">請確保您已年滿 18 歲</p>
-                    </div>
                 </div>
             </div>
             
@@ -1911,12 +1880,6 @@ function handleUI(request) {
         
         let generationAborted = false;
         let currentAbortController = null;
-        
-        function toggleNSFWWarning() {
-            const checkbox = document.getElementById('nsfw');
-            const warning = document.getElementById('nsfwWarning');
-            warning.style.display = checkbox.checked ? 'block' : 'none';
-        }
         
         function toggleAutoHD() {
             const checked = document.getElementById('autoHD').checked;
@@ -2256,16 +2219,11 @@ function handleUI(request) {
             const enhance = document.getElementById('enhance').checked;
             const nologo = document.getElementById('nologo').checked;
             const privateMode = document.getElementById('private').checked;
-            const nsfw = document.getElementById('nsfw').checked;
             
             const resultDiv = document.getElementById('result');
             
             if (!prompt) {
                 resultDiv.innerHTML = '<div class="error">⚠️ 請輸入提示詞</div>';
-                return;
-            }
-            
-            if (nsfw && !confirm('確認您已年滿18歲?')) {
                 return;
             }
             
@@ -2299,7 +2257,7 @@ function handleUI(request) {
                         steps: steps,
                         auto_optimize: autoOptimize,
                         auto_hd: autoHD,
-                        enhance, nologo, private: privateMode, nsfw
+                        enhance, nologo, private: privateMode
                     }),
                     signal: currentAbortController.signal
                 });
@@ -2317,90 +2275,4 @@ function handleUI(request) {
                     throw new Error(data.error.message);
                 }
                 
-                if (!data.data || data.data.length === 0) {
-                    throw new Error('沒有生成圖片');
-                }
-                
-                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                
-                data.data.forEach(item => {
-                    saveHistory({
-                        url: item.url,
-                        prompt, negativePrompt, model: item.model, style,
-                        numOutputs: num, width: item.width, height: item.height, seed,
-                        qualityMode: item.quality_mode,
-                        guidance: item.guidance, steps: item.steps, 
-                        enhance, nologo, privateMode, nsfw
-                    });
-                });
-                
-                setTimeout(() => {
-                    const images = data.data.map((item, idx) => 
-                        \`<img src="\${item.url}" onclick="window.open(this.src)" alt="\${idx + 1}" loading="lazy" style="animation: fadeIn 0.5s ease-in \${idx * 0.1}s backwards;">\`
-                    ).join('');
-                    
-                    const complexity = data.data[0].prompt_complexity;
-                    const complexityPercent = (complexity * 100).toFixed(0);
-                    
-                    const optimizedNote = data.data[0].auto_optimized ? 
-                        \`<p style="color: #10b981; font-size: 12px; margin-top: 4px;">🎯 步數: \${data.data[0].steps} | 引導: \${data.data[0].guidance} (智能優化)</p>\` : '';
-                    
-                    const hdNote = data.data[0].hd_optimized ? 
-                        \`<p style="color: #a78bfa; font-size: 12px; margin-top: 4px;">🎨 高清優化: \${data.data[0].width}x\${data.data[0].height} | 質量模式: \${data.data[0].quality_mode}</p>\` : '';
-                    
-                    const complexityNote = \`<p style="color: #60a5fa; font-size: 12px; margin-top: 4px;">🧠 提示詞複雜度: \${complexityPercent}%</p>\`;
-                    
-                    resultDiv.innerHTML = \`
-                        <div class="success" style="animation: slideIn 0.5s ease-out;">
-                            <strong style="font-size: 20px;">🎉 成功!</strong>
-                            <p style="margin-top: 12px; font-size: 14px;">
-                                <strong>模型:</strong> \${data.data[0].model} | 
-                                <strong>尺寸:</strong> \${data.data[0].width}x\${data.data[0].height}<br>
-                                <strong>耗時:</strong> \${elapsed}秒 | 
-                                <strong>費用:</strong> <span style="color:#10b981">免費</span>
-                            </p>
-                            \${complexityNote}
-                            \${optimizedNote}
-                            \${hdNote}
-                        </div>
-                        <div class="result-grid">\${images}</div>
-                    \`;
-                }, 500);
-                
-            } catch (error) {
-                clearInterval(progressInterval);
-                
-                if (error.name === 'AbortError') {
-                    return;
-                }
-                
-                console.error(error);
-                resultDiv.innerHTML = \`
-                    <div class="error" style="animation: slideIn 0.5s ease-out;">
-                        <strong style="font-size: 18px;">❌ 失敗</strong>
-                        <p style="margin-top: 12px;">\${error.message}</p>
-                        <button onclick="generate()" style="margin-top: 16px; width: auto; padding: 10px 24px;">🔄 重試</button>
-                    </div>
-                \`;
-            }
-        }
-        
-        updateSize();
-        updateHistoryCount();
-        
-        document.getElementById('prompt').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                generate();
-            }
-        });
-        
-        console.log('%c🎨 v${CONFIG.PROJECT_VERSION} - Intelligent Adaptive HD', 'font-size: 16px; color: #f59e0b; font-weight: bold;');
-    </script>
-</body>
-</html>`;
-
-  return new Response(html, { 
-    headers: corsHeaders({ 'Content-Type': 'text/html; charset=utf-8' })
-  });
-}
+                if (!
