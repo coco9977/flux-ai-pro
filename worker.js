@@ -1,6 +1,6 @@
 // =================================================================================
 //  項目: multi-provider-image-generator
-//  版本: 9.0.0 (Nano Banana 增強版 - 方案A全功能)
+//  版本: 9.0.1 (修復語法錯誤)
 //  作者: Enhanced by AI Assistant  
 //  日期: 2025-12-12
 //  新功能: 4K支持 | 繁中文字渲染 | 圖生圖 | 14圖融合 | 專屬面板
@@ -8,7 +8,7 @@
 
 const CONFIG = {
   PROJECT_NAME: "multi-provider-image-generator",
-  PROJECT_VERSION: "9.0.0",
+  PROJECT_VERSION: "9.0.1",
   API_MASTER_KEY: "1",
   
   PROVIDERS: {
@@ -267,7 +267,6 @@ class Logger {
     get() { return this.logs; }
 }
 
-// 自動翻譯函數(使用 Cloudflare Workers AI)
 async function translateToEnglish(text, env) {
     try {
         const hasChinese = /[\u4e00-\u9fa5]/.test(text);
@@ -293,7 +292,6 @@ async function translateToEnglish(text, env) {
     }
 }
 
-// 中文文字渲染優化器
 class ChineseTextOptimizer {
     static optimize(prompt, model) {
         const modelConfig = CONFIG.PROVIDERS.pollinations.models.find(m => m.id === model);
@@ -1186,7 +1184,7 @@ button{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b 0%,#d97
 <label>藝術風格</label>
 <select id="style">
 <option value="none">無</option>
-${Object.entries(CONFIG.STYLE_PRESETS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('')}
+${Object.entries(CONFIG.STYLE_PRESETS).map(([k,v])=>'<option value="'+k+'">'+v.name+'</option>').join('')}
 </select>
 <div class="checkbox-group">
 <input type="checkbox" id="enableChineseBoost">
@@ -1199,7 +1197,7 @@ ${Object.entries(CONFIG.STYLE_PRESETS).map(([k,v])=>`<option value="${k}">${v.na
 <label>快速模板</label>
 <select id="bananaPreset" onchange="applyBananaPreset()">
 <option value="">選擇模板...</option>
-${Object.entries(CONFIG.NANO_BANANA_PRESETS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('')}
+${Object.entries(CONFIG.NANO_BANANA_PRESETS).map(([k,v])=>'<option value="'+k+'">'+v.name+'</option>').join('')}
 </select>
 </div>
 
@@ -1207,7 +1205,7 @@ ${Object.entries(CONFIG.NANO_BANANA_PRESETS).map(([k,v])=>`<option value="${k}">
 <h3>🎨 圖像參數</h3>
 <label>尺寸預設</label>
 <select id="sizePreset" onchange="applySizePreset()">
-${Object.entries(CONFIG.PRESET_SIZES).map(([k,v])=>`<option value="${k}">${v.name}${v.exclusive?' 🍌':''}</option>`).join('')}
+${Object.entries(CONFIG.PRESET_SIZES).map(([k,v])=>'<option value="'+k+'">'+v.name+(v.exclusive?' 🍌':'')+'</option>').join('')}
 </select>
 <label>寬度: <span id="widthValue">1024</span>px</label>
 <input type="range" id="width" min="256" max="4096" step="64" value="1024">
@@ -1263,7 +1261,9 @@ const preset=BANANA_PRESETS[presetKey];
 if(preset){
 document.getElementById('prompt').value=preset.prompt;
 if(preset.recommended_size){
-const[w,h]=preset.recommended_size.split('x').map(Number);
+const sizes=preset.recommended_size.split('x');
+const w=parseInt(sizes[0]);
+const h=parseInt(sizes[1]);
 document.getElementById('width').value=w;
 document.getElementById('height').value=h;
 document.getElementById('widthValue').textContent=w;
@@ -1272,8 +1272,8 @@ document.getElementById('heightValue').textContent=h;
 }
 }
 
-document.getElementById('width').oninput=()=>document.getElementById('widthValue').textContent=document.getElementById('width').value;
-document.getElementById('height').oninput=()=>document.getElementById('heightValue').textContent=document.getElementById('height').value;
+document.getElementById('width').oninput=function(){document.getElementById('widthValue').textContent=this.value;};
+document.getElementById('height').oninput=function(){document.getElementById('heightValue').textContent=this.value;};
 
 async function generate(){
 const prompt=document.getElementById('prompt').value.trim();
@@ -1307,13 +1307,17 @@ const data=await response.json();
 if(!response.ok)throw new Error(data.error?.message||'生成失敗');
 
 resultDiv.innerHTML='<div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;padding:16px;border-radius:12px;color:#10b981"><strong>✅ 生成成功!</strong></div>';
-data.data.forEach((item,index)=>{
+data.data.forEach(function(item,index){
 const is4K=item.is_4k?'<span class="tag-4k">4K</span>':'';
 const chineseOpt=item.chinese_text_optimized?' | 🍌 繁中優化':'';
-resultDiv.innerHTML+=`<div style="margin-top:20px"><img src="${item.url}" style="width:100%;border-radius:12px" onclick="window.open('${item.url}')"><div class="result-meta">${item.model} | ${item.width}x${item.height}${is4K} | ${item.quality_mode}${chineseOpt}</div></div>`;
+const imgDiv=document.createElement('div');
+imgDiv.style.marginTop='20px';
+imgDiv.innerHTML='<img src="'+item.url+'" style="width:100%;border-radius:12px;cursor:pointer"><div class="result-meta">'+item.model+' | '+item.width+'x'+item.height+is4K+' | '+item.quality_mode+chineseOpt+'</div>';
+imgDiv.querySelector('img').onclick=function(){window.open(item.url);};
+resultDiv.appendChild(imgDiv);
 });
 }catch(error){
-resultDiv.innerHTML=`<div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;padding:16px;border-radius:12px;color:#ef4444"><strong>❌ 錯誤:</strong> ${error.message}</div>`;
+resultDiv.innerHTML='<div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;padding:16px;border-radius:12px;color:#ef4444"><strong>❌ 錯誤:</strong> '+error.message+'</div>';
 }finally{
 button.disabled=false;
 button.textContent='🚀 開始生成';
