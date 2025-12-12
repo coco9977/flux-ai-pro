@@ -1,14 +1,14 @@
 // =================================================================================
 //  項目: Flux AI Pro
-//  版本: 9.3.3 (修復藝術風格)
+//  版本: 9.3.4 (24種藝術風格)
 //  作者: Enhanced by AI Assistant  
 //  日期: 2025-12-12
-//  功能: 本地上傳 | 圖生圖 | 多圖融合 | 多張生成 | 英文提示詞
+//  功能: 本地上傳 | 圖生圖 | 多圖融合 | 多張生成 | 24種藝術風格
 // =================================================================================
 
 const CONFIG = {
   PROJECT_NAME: "Flux-AI-Pro",
-  PROJECT_VERSION: "9.3.3",
+  PROJECT_VERSION: "9.3.4",
   API_MASTER_KEY: "1",
   
   PROVIDERS: {
@@ -70,13 +70,44 @@ const CONFIG = {
   
   STYLE_PRESETS: {
     none: { name: "無 (使用原始提示詞)", prompt: "", negative: "" },
+    
+    // 動漫系列
     "anime": { name: "動漫風格 ✨", prompt: "anime style, anime art, vibrant colors, anime character, detailed anime", negative: "realistic, photograph, 3d, ugly" },
-    "photorealistic": { name: "寫實照片 📷", prompt: "photorealistic, ultra realistic, 8k uhd, professional photography, detailed, sharp focus", negative: "anime, cartoon, illustration, painting" },
-    "oil-painting": { name: "油畫 🎨", prompt: "oil painting, classical oil painting style, visible brushstrokes, rich colors, artistic", negative: "photograph, digital art, anime" },
-    "watercolor": { name: "水彩畫 💧", prompt: "watercolor painting, soft colors, watercolor texture, artistic, hand-painted", negative: "photograph, digital, sharp edges" },
-    "sketch": { name: "素描 ✏️", prompt: "pencil sketch, hand-drawn, sketch art, graphite drawing, artistic sketch", negative: "colored, painted, digital" },
-    "cyberpunk": { name: "賽博朋克 🌃", prompt: "cyberpunk style, neon lights, futuristic, sci-fi, dystopian, high-tech low-life", negative: "natural, rustic, medieval" },
-    "fantasy": { name: "奇幻風格 🐉", prompt: "fantasy art, magical, epic fantasy, detailed fantasy illustration", negative: "modern, realistic, mundane" }
+    "manga": { name: "日本漫畫 📖", prompt: "manga style, black and white manga, manga art, comic book style, Japanese manga, ink drawing, screen tone", negative: "colored, realistic, photograph, 3d" },
+    "chibi": { name: "Q版可愛 🎀", prompt: "chibi style, cute chibi character, kawaii, adorable, big eyes, super deformed, pastel colors", negative: "realistic, detailed anatomy, mature" },
+    
+    // 寫實系列
+    "photorealistic": { name: "寫實照片 📷", prompt: "photorealistic, ultra realistic, 8k uhd, professional photography, detailed, sharp focus, DSLR quality", negative: "anime, cartoon, illustration, painting, low quality" },
+    "cinematic": { name: "電影風格 🎬", prompt: "cinematic lighting, movie still, dramatic lighting, film grain, anamorphic lens, bokeh, depth of field, cinematic color grading", negative: "amateur, flat lighting, overexposed" },
+    "portrait": { name: "人像攝影 👤", prompt: "professional portrait photography, studio lighting, shallow depth of field, 85mm lens, bokeh background, high detail", negative: "full body, landscape, low quality" },
+    
+    // 繪畫系列
+    "oil-painting": { name: "油畫 🎨", prompt: "oil painting, classical oil painting style, visible brushstrokes, rich colors, artistic, canvas texture", negative: "photograph, digital art, anime, flat" },
+    "watercolor": { name: "水彩畫 💧", prompt: "watercolor painting, soft colors, watercolor texture, artistic, hand-painted, flowing colors, paper texture", negative: "photograph, digital, sharp edges, 3d" },
+    "sketch": { name: "素描 ✏️", prompt: "pencil sketch, hand-drawn, sketch art, graphite drawing, artistic sketch, detailed line work", negative: "colored, painted, digital, photograph" },
+    "ink-painting": { name: "水墨畫 🖌️", prompt: "Chinese ink painting, traditional ink wash painting, monochrome, brush strokes, minimalist, artistic", negative: "colored, western art, photograph" },
+    
+    // 數位藝術系列
+    "digital-art": { name: "數位藝術 💻", prompt: "digital art, digital painting, concept art, detailed illustration, professional artwork, vibrant colors", negative: "photograph, traditional media, sketchy" },
+    "pixel-art": { name: "像素藝術 🕹️", prompt: "pixel art, 8bit style, retro game art, pixelated, sprite art, retro gaming aesthetic", negative: "high resolution, realistic, smooth, 3d" },
+    "low-poly": { name: "低多邊形 🔷", prompt: "low poly art, geometric shapes, faceted design, minimalist 3d, polygon art, clean geometric style", negative: "high poly, detailed, realistic, organic" },
+    "vaporwave": { name: "蒸汽波 🌴", prompt: "vaporwave aesthetic, retro futuristic, neon colors, glitch art, 80s aesthetic, palm trees, grid background", negative: "realistic, natural colors, modern" },
+    
+    // 幻想系列
+    "fantasy": { name: "奇幻風格 🐉", prompt: "fantasy art, magical, epic fantasy, detailed fantasy illustration, mythical, enchanted", negative: "modern, realistic, mundane, contemporary" },
+    "cyberpunk": { name: "賽博朋克 🌃", prompt: "cyberpunk style, neon lights, futuristic, sci-fi, dystopian, high-tech low-life, cybernetic", negative: "natural, rustic, medieval, pastoral" },
+    "steampunk": { name: "蒸汽朋克 ⚙️", prompt: "steampunk style, Victorian era, brass and copper, gears and cogs, steam-powered, industrial revolution aesthetic", negative: "modern, digital, minimalist" },
+    
+    // 特殊風格
+    "horror": { name: "恐怖風格 👻", prompt: "horror art, dark atmosphere, eerie, creepy, mysterious, dramatic shadows, unsettling, gothic", negative: "bright, cheerful, cute, colorful" },
+    "minimalist": { name: "極簡主義 ⚪", prompt: "minimalist design, simple, clean lines, negative space, minimal colors, modern minimalism", negative: "detailed, complex, ornate, cluttered" },
+    "abstract": { name: "抽象藝術 🎭", prompt: "abstract art, non-representational, geometric shapes, color field, experimental, avant-garde", negative: "realistic, figurative, detailed objects" },
+    "pop-art": { name: "普普藝術 🎪", prompt: "pop art style, bold colors, comic book style, Andy Warhol inspired, halftone dots, vibrant, retro", negative: "realistic, muted colors, traditional" },
+    
+    // 遊戲風格
+    "studio-ghibli": { name: "吉卜力風格 🏯", prompt: "Studio Ghibli style, Hayao Miyazaki art style, anime background, beautiful scenery, whimsical, hand-painted", negative: "realistic, dark, gritty, western cartoon" },
+    "disney": { name: "迪士尼風格 🏰", prompt: "Disney animation style, Disney character design, 3D animated, Pixar style, colorful, family-friendly", negative: "realistic, anime, dark, gritty" },
+    "comic-book": { name: "美式漫畫 💥", prompt: "American comic book style, superhero comic art, bold outlines, dynamic action, halftone dots, vibrant colors", negative: "realistic, manga, photograph" }
   },
   
   OPTIMIZATION_RULES: {
@@ -108,9 +139,12 @@ const CONFIG = {
     },
     STYLE_ADJUSTMENT: {
       "photorealistic": 1.1,
+      "cinematic": 1.1,
+      "portrait": 1.1,
       "oil-painting": 1.05,
       "watercolor": 0.95,
       "sketch": 0.9,
+      "pixel-art": 0.85,
       "default": 1.0
     }
   },
@@ -314,7 +348,7 @@ class ParameterOptimizer {
         
         if (model.includes('turbo') || model.includes('lightning')) {
             baseGuidance = style === 'photorealistic' ? 3.0 : 2.5;
-        } else if (style === 'photorealistic') {
+        } else if (style === 'photorealistic' || style === 'cinematic' || style === 'portrait') {
             baseGuidance = 8.5;
         } else if (['oil-painting', 'watercolor', 'sketch'].includes(style)) {
             baseGuidance = 6.5;
@@ -487,6 +521,7 @@ class PollinationsProvider {
         logger.add("🎨 Generation Config", { 
             provider: this.name, 
             model: model, 
+            style: style,
             dimensions: finalWidth + "x" + finalHeight,
             is_4k: finalWidth >= 4096 || finalHeight >= 4096,
             quality_mode: qualityMode, 
@@ -546,7 +581,8 @@ class PollinationsProvider {
                         if (contentType && contentType.startsWith('image/')) {
                             logger.add("✅ Success", { 
                                 url: response.url, 
-                                used_model: tryModel, 
+                                used_model: tryModel,
+                                style: style,
                                 final_size: finalWidth + "x" + finalHeight,
                                 is_4k: finalWidth >= 4096 || finalHeight >= 4096,
                                 quality_mode: qualityMode, 
@@ -679,8 +715,9 @@ export default {
             '多圖融合 (Multi-Image Fusion)',
             '多張生成 (Batch 1-4)',
             '4K Ultra HD',
+            '24種藝術風格',
             'Session History',
-            '17 Models | 8 Styles',
+            '17 Models',
             'English Prompts Only'
           ]
         }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
@@ -694,6 +731,7 @@ export default {
             '🖼️ Multi-Image Fusion',
             '🎲 Batch Generation (1-4)',
             '🍌 4K Support',
+            '🎭 24 Art Styles',
             '⏱️ Timer',
             '📜 Session History',
             '🇺🇸 English Only'
@@ -890,13 +928,13 @@ async function handleImageGenerations(request, env) {
                 provider: r.provider, 
                 model: r.model, 
                 seed: r.seed, 
+                style: r.style,
                 width: r.width, 
                 height: r.height,
                 is_4k: r.is_4k,
                 reference_images: r.reference_images || [],
                 reference_images_count: r.reference_images_count || 0,
                 generation_mode: r.generation_mode || "Text-to-Image",
-                style: r.style, 
                 quality_mode: r.quality_mode, 
                 prompt_complexity: r.prompt_complexity, 
                 steps: r.steps, 
@@ -975,9 +1013,11 @@ function handleStylesRequest() {
     }));
     return new Response(JSON.stringify({ 
         object: 'list', 
-        data: styles 
+        data: styles,
+        total: styles.length
     }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
 }
+
 function handleUI() {
   const html = `<!DOCTYPE html>
 <html lang="zh-TW">
@@ -1013,6 +1053,7 @@ button{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b 0%,#d97
 .spinner{border:3px solid rgba(255,255,255,0.3);border-top:3px solid #ec4899;border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .tag-mode{display:inline-block;background:linear-gradient(135deg,#ec4899 0%,#db2777 100%);color:#fff;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-left:6px}
+.tag-style{display:inline-block;background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);color:#fff;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-left:6px}
 .result-meta{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);padding:8px 12px;border-radius:8px;margin-top:8px;font-size:12px;color:#10b981}
 .tag-4k{display:inline-block;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#000;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-left:6px}
 .timer{color:#10b981;font-weight:700;margin-left:8px}
@@ -1034,7 +1075,7 @@ button{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b 0%,#d97
 <div class="header">
 <div class="header-left">
 <h1>🎨 Flux AI Pro<span class="badge">v${CONFIG.PROJECT_VERSION}</span></h1>
-<p class="subtitle">本地上傳 · 圖生圖 · 多圖融合 · 多張生成 · 4K · 英文提示詞</p>
+<p class="subtitle">本地上傳 · 圖生圖 · 多圖融合 · 多張生成 · 4K · 24種藝術風格</p>
 </div>
 <button onclick="toggleHistory()" class="history-btn">📜 歷史<span id="historyBadge" class="history-badge" style="display:none">0</span></button>
 </div>
@@ -1091,13 +1132,44 @@ button{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b 0%,#d97
 <label>藝術風格</label>
 <select id="style">
 <option value="none">無 (使用原始提示詞)</option>
+<optgroup label="✨ 動漫系列">
 <option value="anime">動漫風格 ✨</option>
+<option value="manga">日本漫畫 📖</option>
+<option value="chibi">Q版可愛 🎀</option>
+</optgroup>
+<optgroup label="📷 寫實系列">
 <option value="photorealistic">寫實照片 📷</option>
+<option value="cinematic">電影風格 🎬</option>
+<option value="portrait">人像攝影 👤</option>
+</optgroup>
+<optgroup label="🎨 繪畫系列">
 <option value="oil-painting">油畫 🎨</option>
 <option value="watercolor">水彩畫 💧</option>
 <option value="sketch">素描 ✏️</option>
-<option value="cyberpunk">賽博朋克 🌃</option>
+<option value="ink-painting">水墨畫 🖌️</option>
+</optgroup>
+<optgroup label="💻 數位藝術">
+<option value="digital-art">數位藝術 💻</option>
+<option value="pixel-art">像素藝術 🕹️</option>
+<option value="low-poly">低多邊形 🔷</option>
+<option value="vaporwave">蒸汽波 🌴</option>
+</optgroup>
+<optgroup label="🐉 幻想系列">
 <option value="fantasy">奇幻風格 🐉</option>
+<option value="cyberpunk">賽博朋克 🌃</option>
+<option value="steampunk">蒸汽朋克 ⚙️</option>
+</optgroup>
+<optgroup label="🎭 特殊風格">
+<option value="horror">恐怖風格 👻</option>
+<option value="minimalist">極簡主義 ⚪</option>
+<option value="abstract">抽象藝術 🎭</option>
+<option value="pop-art">普普藝術 🎪</option>
+</optgroup>
+<optgroup label="🎮 遊戲風格">
+<option value="studio-ghibli">吉卜力風格 🏯</option>
+<option value="disney">迪士尼風格 🏰</option>
+<option value="comic-book">美式漫畫 💥</option>
+</optgroup>
 </select>
 </div>
 
@@ -1350,7 +1422,7 @@ renderReferenceImages();
 }
 
 function loadHistory(){
-console.log('✓ History loaded (session only - v9.3.3)');
+console.log('✓ History loaded (session only - v9.3.4)');
 updateHistoryBadge();
 }
 
@@ -1393,196 +1465,6 @@ generationHistory.forEach((item,index)=>{
 const div=document.createElement('div');
 div.className='history-item';
 const modeTag=item.generation_mode?'<span class="tag-mode">'+item.generation_mode+'</span>':'';
+const styleTag=item.style&&item.style!=='none'?'<span class="tag-style">'+item.style+'</span>':'';
 const refCount=item.reference_images_count>0?' | '+item.reference_images_count+'張參考圖':'';
-div.innerHTML='<div style="display:flex;gap:15px"><img src="'+item.url+'" class="history-img" onclick="window.open(\\''+item.url+'\\')"><div style="flex:1"><p style="color:#f59e0b;font-weight:600">'+item.prompt.substring(0,50)+'...'+modeTag+'</p><div class="history-info">'+item.model+' | '+item.width+'x'+item.height+refCount+' | '+(item.duration||'N/A')+'</div><div class="history-info">'+new Date(item.timestamp).toLocaleString('zh-TW')+'</div><div class="history-actions"><button onclick="regenFromHistory('+index+')">🔄 重新生成</button><button onclick="deleteHistory('+index+')" style="background:#ef4444">🗑️ 刪除</button></div></div></div>';
-list.appendChild(div);
-});
-}
-
-function regenFromHistory(index){
-const item=generationHistory[index];
-document.getElementById('prompt').value=item.prompt;
-document.getElementById('model').value=item.model;
-document.getElementById('width').value=item.width;
-document.getElementById('height').value=item.height;
-document.getElementById('widthValue').textContent=item.width;
-document.getElementById('heightValue').textContent=item.height;
-if(item.negative_prompt)document.getElementById('negativePrompt').value=item.negative_prompt;
-if(item.style)document.getElementById('style').value=item.style;
-if(item.quality_mode)document.getElementById('qualityMode').value=item.quality_mode;
-if(item.reference_images){
-referenceImages=item.reference_images;
-renderReferenceImages();
-}
-closeHistory();
-alert('已載入歷史配置,點擊生成按鈕即可!');
-}
-
-function deleteHistory(index){
-if(confirm('確定刪除此記錄?')){
-generationHistory.splice(index,1);
-updateHistoryBadge();
-renderHistory();
-}
-}
-
-function clearHistory(){
-if(confirm('確定清空所有歷史記錄?')){
-generationHistory=[];
-updateHistoryBadge();
-renderHistory();
-}
-}
-
-function applySizePreset(){
-const preset=PRESETS[document.getElementById('sizePreset').value];
-if(preset){
-document.getElementById('width').value=preset.width;
-document.getElementById('height').value=preset.height;
-document.getElementById('widthValue').textContent=preset.width;
-document.getElementById('heightValue').textContent=preset.height;
-}
-}
-
-document.getElementById('width').oninput=function(){document.getElementById('widthValue').textContent=this.value;};
-document.getElementById('height').oninput=function(){document.getElementById('heightValue').textContent=this.value;};
-
-window.onclick=function(event){
-const modal=document.getElementById('historyModal');
-if(event.target===modal)modal.style.display='none';
-};
-
-async function generate(){
-const prompt=document.getElementById('prompt').value.trim();
-if(!prompt){alert('請輸入提示詞 (Please enter a prompt)');return;}
-
-const validRefImages=referenceImages.filter(img=>typeof img==='string'||!img.uploading);
-if(validRefImages.length<referenceImages.length){
-alert('請等待圖片上傳完成');
-return;
-}
-
-const numOutputs=parseInt(document.getElementById('numOutputs').value);
-
-const params={
-prompt:prompt,
-negative_prompt:document.getElementById('negativePrompt').value,
-model:document.getElementById('model').value,
-style:document.getElementById('style').value,
-width:parseInt(document.getElementById('width').value),
-height:parseInt(document.getElementById('height').value),
-quality_mode:document.getElementById('qualityMode').value,
-n:numOutputs,
-auto_optimize:true,
-auto_hd:true,
-reference_images:validRefImages
-};
-
-const resultDiv=document.getElementById('result');
-const button=document.querySelector('button[onclick="generate()"]');
-button.disabled=true;
-
-const startTime=Date.now();
-let timerInterval;
-button.textContent='生成中 (0/'+numOutputs+') ⏱️ 0.0s';
-
-timerInterval=setInterval(()=>{
-const elapsed=((Date.now()-startTime)/1000).toFixed(1);
-button.textContent='生成中 ⏱️ '+elapsed+'s';
-},100);
-
-try{
-const response=await fetch('/v1/images/generations',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify(params)
-});
-const data=await response.json();
-if(!response.ok)throw new Error(data.error?.message||'生成失敗');
-
-const duration=((Date.now()-startTime)/1000).toFixed(1)+'s';
-clearInterval(timerInterval);
-
-const numGenerated=data.data.length;
-resultDiv.innerHTML='<div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;padding:16px;border-radius:12px;color:#10b981;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><div><strong>✅ 生成成功!</strong> 共 '+numGenerated+' 張<span class="timer">⏱️ '+duration+'</span></div>'+(numGenerated>1?'<button onclick="downloadAllImages()" style="width:auto;padding:10px 20px;margin:0;background:linear-gradient(135deg,#10b981 0%,#059669 100%)">📥 下載全部 ('+numGenerated+')</button>':'')+'</div>';
-
-window.currentBatchImages=data.data.map(item=>({url:item.url,filename:'flux-'+item.seed+'.png'}));
-
-data.data.forEach(function(item,index){
-const is4K=item.is_4k?'<span class="tag-4k">4K</span>':'';
-const modeTag=item.generation_mode?'<span class="tag-mode">'+item.generation_mode+'</span>':'';
-const imgDiv=document.createElement('div');
-imgDiv.style.marginTop='20px';
-imgDiv.innerHTML='<div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:12px"><h4 style="color:#f59e0b;margin-bottom:10px">圖片 '+(index+1)+'/'+numGenerated+' <span style="color:#9ca3af;font-size:14px;font-weight:400">Seed: '+item.seed+'</span></h4><img src="'+item.url+'" style="width:100%;border-radius:12px;cursor:pointer;transition:transform 0.3s" onmouseover="this.style.transform=\\'scale(1.02)\\'" onmouseout="this.style.transform=\\'scale(1)\\'"><div class="result-meta">'+item.model+' | '+item.width+'x'+item.height+is4K+modeTag+' | '+item.quality_mode+' | <span class="timer">⏱️ '+duration+'</span></div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><button onclick="window.open(\\''+item.url+'\\')" style="width:auto;padding:8px 16px;margin:0;font-size:13px">🔗 新窗口</button><button onclick="downloadImage(\\''+item.url+'\\',\\'flux-'+item.seed+'.png\\')" style="width:auto;padding:8px 16px;margin:0;font-size:13px;background:linear-gradient(135deg,#10b981 0%,#059669 100%)">💾 下載</button><button onclick="copyToClipboard(\\''+item.url+'\\')" style="width:auto;padding:8px 16px;margin:0;font-size:13px;background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%)">📋 複製URL</button></div></div>';
-imgDiv.querySelector('img').onclick=function(){window.open(item.url);};
-resultDiv.appendChild(imgDiv);
-
-addToHistory({
-url:item.url,
-prompt:params.prompt,
-negative_prompt:params.negative_prompt,
-model:item.model,
-width:item.width,
-height:item.height,
-style:params.style,
-quality_mode:params.quality_mode,
-reference_images:item.reference_images||[],
-reference_images_count:item.reference_images_count||0,
-generation_mode:item.generation_mode||'Text-to-Image',
-duration:duration
-});
-});
-}catch(error){
-clearInterval(timerInterval);
-resultDiv.innerHTML='<div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;padding:16px;border-radius:12px;color:#ef4444"><strong>❌ 錯誤:</strong> '+error.message+'</div>';
-}finally{
-button.disabled=false;
-button.textContent='🚀 開始生成';
-}
-}
-
-async function downloadImage(url,filename){
-try{
-const response=await fetch(url);
-const blob=await response.blob();
-const link=document.createElement('a');
-link.href=URL.createObjectURL(blob);
-link.download=filename;
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-URL.revokeObjectURL(link.href);
-}catch(error){
-alert('下載失敗,請右鍵另存為');
-window.open(url,'_blank');
-}
-}
-
-async function downloadAllImages(){
-if(!window.currentBatchImages||window.currentBatchImages.length===0){
-alert('沒有可下載的圖片');
-return;
-}
-for(let i=0;i<window.currentBatchImages.length;i++){
-const img=window.currentBatchImages[i];
-await downloadImage(img.url,img.filename);
-await new Promise(resolve=>setTimeout(resolve,500));
-}
-alert('已下載 '+window.currentBatchImages.length+' 張圖片!');
-}
-
-function copyToClipboard(text){
-navigator.clipboard.writeText(text).then(()=>{
-alert('✅ URL 已複製到剪貼板!');
-}).catch(()=>{
-prompt('複製此 URL:',text);
-});
-}
-
-loadHistory();
-updateRefImageLimit();
-</script>
-</body>
-</html>`;
-  return new Response(html, { headers: corsHeaders({ 'Content-Type': 'text/html; charset=utf-8' }) });
-}
+div.innerHTML='<div style="display:flex;gap:15px"><img src="'+item.url+'" class="history-img" onclick="window.open(\\''+item.url+'\\')"><div style="flex:1"><p style="color:#f59e0b;font-weight:600">'+item.prompt.substring(0,50)+'...'+modeTag+styleTag+'</p><div class
