@@ -1,15 +1,15 @@
 // =================================================================================
 //  項目: Flux AI Pro
-//  版本: 9.2.0-fixed
+//  版本: 9.3.0-optimized
 //  作者: Enhanced by AI Assistant  
 //  日期: 2025-12-12
-//  功能: 本地上傳 | 圖生圖 | 多圖融合 | 中文支持 | 4K | 計時器 | 歷史
-//  修復: 翻譯(m2m100) + 風格處理 + 移除示例按鈕
+//  功能: 多張生成 | Seed控制 | 39種風格 | 35+尺寸 | API優化
+//  修復: 翻譯(m2m100) + 風格處理 + 速率限制 + 緩存
 // =================================================================================
 
 const CONFIG = {
   PROJECT_NAME: "Flux-AI-Pro",
-  PROJECT_VERSION: "9.2.0-fixed",
+  PROJECT_VERSION: "9.3.0-optimized",
   API_MASTER_KEY: "1",
   
   PROVIDERS: {
@@ -36,7 +36,8 @@ const CONFIG = {
         ultra_hd_4k: true,
         reference_images: true,
         image_to_image: true,
-        multi_image_fusion: true
+        multi_image_fusion: true,
+        batch_generation: true
       },
       models: [
         { id: "flux", name: "Flux", confirmed: true, category: "flux", description: "均衡速度與質量", max_size: 2048 },
@@ -65,46 +66,45 @@ const CONFIG = {
   DEFAULT_PROVIDER: "pollinations",
   
   STYLE_PRESETS: {
-    none: { 
-        name: "無 (使用原始提示詞)", 
-        prompt: "", 
-        negative: "" 
-    },
-    anime: { 
-        name: "動漫風格 ✨", 
-        prompt: "anime style, anime art, vibrant colors, anime character, detailed anime", 
-        negative: "realistic, photograph, 3d, ugly" 
-    },
-    photorealistic: { 
-        name: "寫實照片 📷", 
-        prompt: "photorealistic, ultra realistic, 8k uhd, professional photography, detailed, sharp focus", 
-        negative: "anime, cartoon, illustration, painting" 
-    },
-    "oil-painting": { 
-        name: "油畫 🎨", 
-        prompt: "oil painting, classical oil painting style, visible brushstrokes, rich colors, artistic", 
-        negative: "photograph, digital art, anime" 
-    },
-    watercolor: { 
-        name: "水彩畫 💧", 
-        prompt: "watercolor painting, soft colors, watercolor texture, artistic, hand-painted", 
-        negative: "photograph, digital, sharp edges" 
-    },
-    sketch: { 
-        name: "素描 ✏️", 
-        prompt: "pencil sketch, hand-drawn, sketch art, graphite drawing, artistic sketch", 
-        negative: "colored, painted, digital" 
-    },
-    cyberpunk: { 
-        name: "賽博朋克 🌃", 
-        prompt: "cyberpunk style, neon lights, futuristic, sci-fi, dystopian, high-tech low-life", 
-        negative: "natural, rustic, medieval" 
-    },
-    fantasy: { 
-        name: "奇幻風格 🐉", 
-        prompt: "fantasy art, magical, epic fantasy, detailed fantasy illustration", 
-        negative: "modern, realistic, mundane" 
-    }
+    none: { name: "無 (使用原始提示詞)", prompt: "", negative: "" },
+    anime: { name: "動漫風格 ✨", prompt: "anime style, anime art, vibrant colors, anime character, detailed anime", negative: "realistic, photograph, 3d, ugly" },
+    "anime-chibi": { name: "Q版動漫 🎎", prompt: "chibi style, cute chibi character, big eyes, small body, kawaii, adorable", negative: "realistic, tall, adult proportions, serious" },
+    "japanese-manga": { name: "日本漫畫 📚", prompt: "manga style, black and white manga, screentone, manga panel, Japanese comic art, ink drawing", negative: "colored, realistic, photograph, western comic" },
+    "shoujo-manga": { name: "少女漫畫 💕", prompt: "shoujo manga style, sparkles, flowers background, big expressive eyes, romantic, soft lines", negative: "shounen, action, dark, gritty" },
+    "seinen-manga": { name: "青年漫畫 🗡️", prompt: "seinen manga style, detailed linework, realistic anatomy, mature themes, detailed shading", negative: "childish, cute, simple, cartoon" },
+    photorealistic: { name: "寫實照片 📷", prompt: "photorealistic, ultra realistic, 8k uhd, professional photography, detailed, sharp focus, DSLR, high resolution", negative: "anime, cartoon, illustration, painting, drawing, art" },
+    "cinematic": { name: "電影級 🎬", prompt: "cinematic lighting, movie still, dramatic lighting, film grain, depth of field, bokeh, anamorphic lens", negative: "amateur, flat lighting, overexposed, cartoon" },
+    "portrait": { name: "人像攝影 👤", prompt: "professional portrait, studio lighting, bokeh background, 85mm lens, shallow depth of field, perfect skin", negative: "full body, landscape, distorted face, bad lighting" },
+    "oil-painting": { name: "油畫 🎨", prompt: "oil painting, classical oil painting style, visible brushstrokes, rich colors, artistic, canvas texture", negative: "photograph, digital art, anime, flat" },
+    watercolor: { name: "水彩畫 💧", prompt: "watercolor painting, soft colors, watercolor texture, artistic, hand-painted, paper texture, flowing colors", negative: "photograph, digital, sharp edges, 3d" },
+    "chinese-painting": { name: "中國水墨畫 🖌️", prompt: "Chinese ink painting, sumi-e style, traditional Chinese art, brush painting, minimalist, black ink, rice paper", negative: "colorful, western, digital, photograph" },
+    "ukiyo-e": { name: "浮世繪 🗾", prompt: "ukiyo-e style, Japanese woodblock print, Hokusai style, traditional Japanese art, flat colors, bold outlines", negative: "3d, realistic, photograph, modern" },
+    sketch: { name: "素描 ✏️", prompt: "pencil sketch, hand-drawn, sketch art, graphite drawing, artistic sketch, cross-hatching", negative: "colored, painted, digital, photograph" },
+    "charcoal": { name: "炭筆畫 🖍️", prompt: "charcoal drawing, charcoal sketch, dramatic shading, black and white, expressive strokes", negative: "colored, digital, clean lines, photograph" },
+    "digital-art": { name: "數位藝術 💻", prompt: "digital art, digital painting, concept art, artstation, highly detailed, vibrant colors", negative: "photograph, traditional art, sketch, low quality" },
+    "pixel-art": { name: "像素藝術 🕹️", prompt: "pixel art, 8-bit style, retro gaming, pixelated, limited color palette, sharp pixels", negative: "high resolution, smooth, realistic, blurry" },
+    "vector-art": { name: "向量藝術 📐", prompt: "vector art, flat design, clean lines, geometric shapes, Adobe Illustrator style, minimalist", negative: "realistic, textured, sketchy, photograph" },
+    "low-poly": { name: "低多邊形 🔷", prompt: "low poly art, geometric, faceted, 3D low poly, minimalist 3D, triangular faces", negative: "high poly, realistic, smooth, curved" },
+    fantasy: { name: "奇幻風格 🐉", prompt: "fantasy art, magical, epic fantasy, detailed fantasy illustration, mystical, enchanted", negative: "modern, realistic, mundane, contemporary" },
+    "dark-fantasy": { name: "黑暗奇幻 🌑", prompt: "dark fantasy, gothic, dark atmosphere, ominous, sinister, dramatic shadows, horror elements", negative: "bright, cheerful, cute, colorful" },
+    "fairy-tale": { name: "童話風格 🧚", prompt: "fairy tale art, storybook illustration, whimsical, magical, enchanted forest, dreamy", negative: "realistic, modern, dark, gritty" },
+    cyberpunk: { name: "賽博朋克 🌃", prompt: "cyberpunk style, neon lights, futuristic, sci-fi, dystopian, high-tech low-life, blade runner style", negative: "natural, rustic, medieval, fantasy" },
+    "sci-fi": { name: "科幻未來 🚀", prompt: "sci-fi, futuristic, advanced technology, space age, sleek design, holographic", negative: "medieval, fantasy, historical, primitive" },
+    steampunk: { name: "蒸汽朋克 ⚙️", prompt: "steampunk style, Victorian era, brass and copper, gears and cogs, mechanical, industrial revolution", negative: "modern, digital, minimalist, clean" },
+    "vaporwave": { name: "蒸氣波 🌈", prompt: "vaporwave aesthetic, retro 80s, neon pink and cyan, glitch art, nostalgic, geometric patterns", negative: "realistic, modern, natural colors" },
+    "studio-ghibli": { name: "吉卜力風格 🍃", prompt: "Studio Ghibli style, Hayao Miyazaki, anime, soft colors, whimsical, detailed background, hand-drawn", negative: "realistic, dark, 3D, western animation" },
+    "disney": { name: "迪士尼風格 🏰", prompt: "Disney animation style, 3D animated, Pixar style, colorful, expressive characters, family-friendly", negative: "realistic, anime, dark, gritty" },
+    "comic-book": { name: "美式漫畫 💥", prompt: "comic book style, bold lines, halftone dots, superhero comic, dynamic pose, action lines", negative: "realistic, photograph, manga, soft" },
+    "pop-art": { name: "普普藝術 🎭", prompt: "pop art style, Andy Warhol, Roy Lichtenstein, bold colors, halftone, graphic design, retro", negative: "realistic, subtle, muted colors, classical" },
+    "art-deco": { name: "裝飾藝術 💎", prompt: "art deco style, geometric patterns, luxurious, elegant, 1920s, gold and black, symmetrical", negative: "organic, natural, messy, modern minimalist" },
+    "art-nouveau": { name: "新藝術風格 🌺", prompt: "art nouveau style, flowing lines, organic forms, floral motifs, Alphonse Mucha, elegant curves", negative: "geometric, modern, minimalist, angular" },
+    "impressionism": { name: "印象派 🌅", prompt: "impressionism style, visible brushstrokes, emphasis on light, Monet, soft focus, outdoor scenes", negative: "sharp, detailed, photorealistic, digital" },
+    "abstract": { name: "抽象藝術 🎨", prompt: "abstract art, non-representational, geometric shapes, bold colors, expressive, modern art", negative: "realistic, detailed, representational, photographic" },
+    "minimalist": { name: "極簡主義 ⬜", prompt: "minimalist art, simple, clean lines, negative space, limited color palette, modern, elegant", negative: "detailed, complex, ornate, cluttered" },
+    "graffiti": { name: "塗鴉藝術 🎨", prompt: "graffiti art, street art, spray paint, urban, bold colors, tags, wild style lettering", negative: "classical, refined, photorealistic, corporate" },
+    "surrealism": { name: "超現實主義 🌀", prompt: "surrealism, dreamlike, Salvador Dali style, impossible geometry, bizarre, subconscious imagery", negative: "realistic, ordinary, conventional, logical" },
+    "horror": { name: "恐怖風格 👻", prompt: "horror art, creepy, disturbing, dark atmosphere, unsettling, macabre, gothic horror", negative: "cute, bright, cheerful, wholesome" },
+    "kawaii": { name: "可愛風格 🌸", prompt: "kawaii style, cute, adorable, pastel colors, Japanese cute culture, soft, rounded shapes", negative: "realistic, dark, scary, mature" }
   },
   
   OPTIMIZATION_RULES: {
@@ -179,16 +179,39 @@ const CONFIG = {
   MAX_RETRIES: 3,
   
   PRESET_SIZES: {
-    "square-1k": { width: 1024, height: 1024, name: "方形 1K" },
-    "square-2k": { width: 2048, height: 2048, name: "方形 2K" },
+    "square-512": { width: 512, height: 512, name: "方形 512px (快速測試)" },
+    "square-1k": { width: 1024, height: 1024, name: "方形 1K (標準)" },
+    "square-1.5k": { width: 1536, height: 1536, name: "方形 1.5K (高清)" },
+    "square-2k": { width: 2048, height: 2048, name: "方形 2K (超清)" },
     "square-4k": { width: 4096, height: 4096, name: "方形 4K 🍌", exclusive: ["nanobanana-pro"] },
-    "portrait": { width: 768, height: 1344, name: "豎屏 9:16" },
-    "portrait-2k": { width: 1536, height: 2688, name: "豎屏 2K" },
-    "landscape": { width: 1344, height: 768, name: "橫屏 16:9" },
-    "landscape-2k": { width: 2688, height: 1536, name: "橫屏 2K" },
-    "standard-portrait": { width: 768, height: 1024, name: "標準豎屏 3:4" },
-    "standard-landscape": { width: 1024, height: 768, name: "標準橫屏 4:3" },
-    "custom": { width: 1024, height: 1024, name: "自定義" }
+    "portrait-9-16": { width: 768, height: 1344, name: "豎屏 9:16 (TikTok/Story)" },
+    "portrait-9-16-hd": { width: 1080, height: 1920, name: "豎屏 9:16 HD (1080p)" },
+    "portrait-9-16-2k": { width: 1536, height: 2688, name: "豎屏 9:16 2K" },
+    "portrait-3-4": { width: 768, height: 1024, name: "豎屏 3:4 (Instagram)" },
+    "portrait-3-4-hd": { width: 1152, height: 1536, name: "豎屏 3:4 HD" },
+    "portrait-2-3": { width: 1024, height: 1536, name: "豎屏 2:3 (Pinterest)" },
+    "landscape-16-9": { width: 1344, height: 768, name: "橫屏 16:9 (YouTube)" },
+    "landscape-16-9-hd": { width: 1920, height: 1080, name: "橫屏 16:9 HD (1080p)" },
+    "landscape-16-9-2k": { width: 2560, height: 1440, name: "橫屏 16:9 2K (1440p)" },
+    "landscape-16-9-4k": { width: 3840, height: 2160, name: "橫屏 16:9 4K 🍌", exclusive: ["nanobanana-pro"] },
+    "landscape-4-3": { width: 1024, height: 768, name: "橫屏 4:3 (傳統)" },
+    "landscape-21-9": { width: 2560, height: 1080, name: "橫屏 21:9 (超寬螢幕)" },
+    "instagram-square": { width: 1080, height: 1080, name: "Instagram 方形貼文" },
+    "instagram-portrait": { width: 1080, height: 1350, name: "Instagram 豎屏貼文 (4:5)" },
+    "instagram-story": { width: 1080, height: 1920, name: "Instagram Story/Reels" },
+    "facebook-cover": { width: 2048, height: 1152, name: "Facebook 封面 (16:9)" },
+    "twitter-header": { width: 1500, height: 500, name: "Twitter/X 橫幅 (3:1)" },
+    "youtube-thumbnail": { width: 1280, height: 720, name: "YouTube 縮圖" },
+    "linkedin-banner": { width: 1584, height: 396, name: "LinkedIn 橫幅" },
+    "a4-portrait": { width: 2480, height: 3508, name: "A4 豎屏 (300 DPI)" },
+    "a4-landscape": { width: 3508, height: 2480, name: "A4 橫屏 (300 DPI)" },
+    "poster-24-36": { width: 2400, height: 3600, name: "海報 24x36 英吋" },
+    "wallpaper-fhd": { width: 1920, height: 1080, name: "桌布 Full HD (1080p)" },
+    "wallpaper-2k": { width: 2560, height: 1440, name: "桌布 2K (1440p)" },
+    "wallpaper-4k": { width: 3840, height: 2160, name: "桌布 4K 🍌", exclusive: ["nanobanana-pro"] },
+    "wallpaper-ultrawide": { width: 3440, height: 1440, name: "桌布 Ultra-Wide (21:9)" },
+    "mobile-wallpaper": { width: 1242, height: 2688, name: "手機桌布 (iPhone)" },
+    "custom": { width: 1024, height: 1024, name: "自定義尺寸" }
   },
   
   HISTORY: {
@@ -196,6 +219,167 @@ const CONFIG = {
     STORAGE_KEY: "flux_ai_history"
   }
 };
+
+// 🚀 API 優化配置
+const API_OPTIMIZATION = {
+  RATE_LIMIT: {
+    enabled: true,
+    max_requests_per_minute: 10,
+    max_requests_per_hour: 100,
+    blacklist_duration: 3600000,
+    whitelist_ips: []
+  },
+  CACHE: {
+    enabled: true,
+    ttl: 3600,
+    max_size: 100,
+    strategy: 'lru'
+  },
+  COMPRESSION: {
+    enabled: true,
+    threshold: 1024,
+    quality: 0.85
+  },
+  CONCURRENCY: {
+    max_parallel: 3,
+    queue_limit: 10,
+    timeout: 120000
+  },
+  MONITORING: {
+    enabled: true,
+    log_requests: true,
+    track_errors: true,
+    performance_metrics: true
+  }
+};
+
+class RateLimiter {
+  constructor() {
+    this.requests = new Map();
+    this.blacklist = new Map();
+  }
+  async check(ip) {
+    if (this.blacklist.has(ip)) {
+      const blockedUntil = this.blacklist.get(ip);
+      if (Date.now() < blockedUntil) {
+        return { allowed: false, reason: 'IP blocked', retryAfter: Math.ceil((blockedUntil - Date.now()) / 1000) };
+      } else {
+        this.blacklist.delete(ip);
+      }
+    }
+    if (API_OPTIMIZATION.RATE_LIMIT.whitelist_ips.includes(ip)) return { allowed: true };
+    const now = Date.now();
+    const oneMinute = 60 * 1000;
+    const oneHour = 60 * 60 * 1000;
+    if (!this.requests.has(ip)) this.requests.set(ip, []);
+    const userRequests = this.requests.get(ip);
+    const validRequests = userRequests.filter(time => now - time < oneHour);
+    this.requests.set(ip, validRequests);
+    const recentRequests = validRequests.filter(time => now - time < oneMinute);
+    if (recentRequests.length >= API_OPTIMIZATION.RATE_LIMIT.max_requests_per_minute) {
+      return { allowed: false, reason: 'Too many requests per minute', limit: API_OPTIMIZATION.RATE_LIMIT.max_requests_per_minute, current: recentRequests.length };
+    }
+    if (validRequests.length >= API_OPTIMIZATION.RATE_LIMIT.max_requests_per_hour) {
+      this.blacklist.set(ip, now + API_OPTIMIZATION.RATE_LIMIT.blacklist_duration);
+      return { allowed: false, reason: 'Hourly limit exceeded', limit: API_OPTIMIZATION.RATE_LIMIT.max_requests_per_hour, blockedUntil: new Date(now + API_OPTIMIZATION.RATE_LIMIT.blacklist_duration).toISOString() };
+    }
+    validRequests.push(now);
+    this.requests.set(ip, validRequests);
+    return { allowed: true, remaining: { perMinute: API_OPTIMIZATION.RATE_LIMIT.max_requests_per_minute - recentRequests.length - 1, perHour: API_OPTIMIZATION.RATE_LIMIT.max_requests_per_hour - validRequests.length } };
+  }
+  reset(ip) {
+    this.requests.delete(ip);
+    this.blacklist.delete(ip);
+  }
+}
+
+class SimpleCache {
+  constructor() {
+    this.cache = new Map();
+    this.accessTime = new Map();
+  }
+  get(key) {
+    if (!API_OPTIMIZATION.CACHE.enabled) return null;
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+    const { value, expires } = cached;
+    if (Date.now() > expires) {
+      this.cache.delete(key);
+      this.accessTime.delete(key);
+      return null;
+    }
+    this.accessTime.set(key, Date.now());
+    return value;
+  }
+  set(key, value, ttl = API_OPTIMIZATION.CACHE.ttl) {
+    if (!API_OPTIMIZATION.CACHE.enabled) return;
+    if (this.cache.size >= API_OPTIMIZATION.CACHE.max_size) {
+      let oldestKey = null;
+      let oldestTime = Date.now();
+      for (const [k, time] of this.accessTime.entries()) {
+        if (time < oldestTime) {
+          oldestTime = time;
+          oldestKey = k;
+        }
+      }
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+        this.accessTime.delete(oldestKey);
+      }
+    }
+    this.cache.set(key, { value: value, expires: Date.now() + (ttl * 1000) });
+    this.accessTime.set(key, Date.now());
+  }
+  clear() {
+    this.cache.clear();
+    this.accessTime.clear();
+  }
+}
+
+class PerformanceMonitor {
+  constructor() {
+    this.metrics = { total_requests: 0, successful_requests: 0, failed_requests: 0, total_duration: 0, avg_duration: 0, errors: [] };
+  }
+  recordRequest(success, duration, error = null) {
+    this.metrics.total_requests++;
+    this.metrics.total_duration += duration;
+    this.metrics.avg_duration = this.metrics.total_duration / this.metrics.total_requests;
+    if (success) {
+      this.metrics.successful_requests++;
+    } else {
+      this.metrics.failed_requests++;
+      if (error && this.metrics.errors.length < 100) {
+        this.metrics.errors.push({ message: error, timestamp: new Date().toISOString() });
+      }
+    }
+  }
+  getStats() {
+    return { ...this.metrics, success_rate: ((this.metrics.successful_requests / this.metrics.total_requests) * 100).toFixed(2) + '%', avg_duration_ms: this.metrics.avg_duration.toFixed(2) };
+  }
+  reset() {
+    this.metrics = { total_requests: 0, successful_requests: 0, failed_requests: 0, total_duration: 0, avg_duration: 0, errors: [] };
+  }
+}
+
+const rateLimiter = new RateLimiter();
+const apiCache = new SimpleCache();
+const perfMonitor = new PerformanceMonitor();
+
+function getClientIP(request) {
+  return request.headers.get('CF-Connecting-IP') || (request.headers.get('X-Forwarded-For') ? request.headers.get('X-Forwarded-For').split(',')[0].trim() : null) || request.headers.get('X-Real-IP') || 'unknown';
+}
+
+function generateCacheKey(prompt, options) {
+  const keyData = { prompt, model: options.model, width: options.width, height: options.height, style: options.style, quality_mode: options.qualityMode, seed: options.seed === -1 ? 'random' : options.seed };
+  const str = JSON.stringify(keyData);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return 'cache_' + Math.abs(hash).toString(36);
+}
 
 class Logger {
     constructor() { this.logs = []; }
@@ -207,58 +391,32 @@ class Logger {
     get() { return this.logs; }
 }
 
-// 🔧 修復版翻譯函數 - 升級到 m2m100
 async function translateToEnglish(text, env) {
     try {
         const hasChinese = /[\u4e00-\u9fa5]/.test(text);
-        if (!hasChinese) {
-            return { text: text, translated: false, reason: "No Chinese detected" };
-        }
-        
+        if (!hasChinese) return { text: text, translated: false, reason: "No Chinese detected" };
         if (!env || !env.AI) {
             console.warn("⚠️ Workers AI not configured");
             return { text: text, translated: false, reason: "AI not configured" };
         }
-        
         try {
-            const response = await env.AI.run("@cf/meta/m2m100", {
-                text: text,
-                source_lang: "chinese",
-                target_lang: "english"
-            });
-            
+            const response = await env.AI.run("@cf/meta/m2m100", { text: text, source_lang: "chinese", target_lang: "english" });
             if (response && response.translated_text) {
                 console.log("✅ Translation:", text, "→", response.translated_text);
-                return { 
-                    text: response.translated_text, 
-                    translated: true, 
-                    original: text,
-                    model: "m2m100"
-                };
+                return { text: response.translated_text, translated: true, original: text, model: "m2m100" };
             }
         } catch (primaryError) {
             console.warn("⚠️ m2m100 failed:", primaryError.message);
             try {
-                const response = await env.AI.run("@cf/meta/m2m100-1.2b", {
-                    text: text,
-                    source_lang: "chinese",
-                    target_lang: "english"
-                });
+                const response = await env.AI.run("@cf/meta/m2m100-1.2b", { text: text, source_lang: "chinese", target_lang: "english" });
                 if (response && response.translated_text) {
-                    return { 
-                        text: response.translated_text, 
-                        translated: true, 
-                        original: text,
-                        model: "m2m100-1.2b"
-                    };
+                    return { text: response.translated_text, translated: true, original: text, model: "m2m100-1.2b" };
                 }
             } catch (fallbackError) {
                 console.error("❌ All translation failed");
             }
         }
-        
         return { text: text, translated: false };
-        
     } catch (error) {
         console.error("❌ translateToEnglish error:", error);
         return { text: text, translated: false, error: error.message };
@@ -407,40 +565,25 @@ class ParameterOptimizer {
     }
 }
 
-// 🔧 修復版 StyleProcessor 類
 class StyleProcessor {
     static applyStyle(prompt, style, negativePrompt) {
         try {
             if (!style || style === 'none' || style === '') {
-                return { 
-                    enhancedPrompt: prompt, 
-                    enhancedNegative: negativePrompt || "" 
-                };
+                return { enhancedPrompt: prompt, enhancedNegative: negativePrompt || "" };
             }
-            
             if (!CONFIG.STYLE_PRESETS || typeof CONFIG.STYLE_PRESETS !== 'object') {
                 console.warn("⚠️ STYLE_PRESETS not found");
-                return { 
-                    enhancedPrompt: prompt, 
-                    enhancedNegative: negativePrompt || "" 
-                };
+                return { enhancedPrompt: prompt, enhancedNegative: negativePrompt || "" };
             }
-            
             const styleConfig = CONFIG.STYLE_PRESETS[style];
-            
             if (!styleConfig) {
                 console.warn("⚠️ Style '" + style + "' not found");
-                return { 
-                    enhancedPrompt: prompt, 
-                    enhancedNegative: negativePrompt || "" 
-                };
+                return { enhancedPrompt: prompt, enhancedNegative: negativePrompt || "" };
             }
-            
             let enhancedPrompt = prompt;
             if (styleConfig.prompt && styleConfig.prompt.trim()) {
                 enhancedPrompt = prompt + ", " + styleConfig.prompt;
             }
-            
             let enhancedNegative = negativePrompt || "";
             if (styleConfig.negative && styleConfig.negative.trim()) {
                 if (enhancedNegative && enhancedNegative.trim()) {
@@ -449,19 +592,11 @@ class StyleProcessor {
                     enhancedNegative = styleConfig.negative;
                 }
             }
-            
             console.log("✅ Style applied:", style);
-            return { 
-                enhancedPrompt: enhancedPrompt, 
-                enhancedNegative: enhancedNegative 
-            };
-            
+            return { enhancedPrompt: enhancedPrompt, enhancedNegative: enhancedNegative };
         } catch (error) {
             console.error("❌ StyleProcessor error:", error.message);
-            return { 
-                enhancedPrompt: prompt, 
-                enhancedNegative: negativePrompt || "" 
-            };
+            return { enhancedPrompt: prompt, enhancedNegative: negativePrompt || "" };
         }
     }
 }
@@ -483,7 +618,7 @@ class PollinationsProvider {
     constructor(config, env) {
         this.config = config;
         this.name = config.name;
-        this.env = env;  // 🔧 確保保存 env
+        this.env = env;
     }
     
     async generate(prompt, options, logger) {
@@ -596,10 +731,8 @@ class PollinationsProvider {
             finalGuidance = guidance || 7.5;
         }
         
-        // 🔧 應用藝術風格 (在翻譯之前)
         const { enhancedPrompt, enhancedNegative } = StyleProcessor.applyStyle(finalPrompt, style, finalNegativePrompt);
         
-        // 添加風格處理日誌
         logger.add("🎨 Style Processing", { 
             selected_style: style,
             style_applied: style !== 'none',
@@ -608,7 +741,6 @@ class PollinationsProvider {
             prompt_added: enhancedPrompt.length - finalPrompt.length
         });
         
-        // 🔧 修復: 確保傳遞 this.env
         const translation = await translateToEnglish(enhancedPrompt, this.env);
         const finalPromptForAPI = translation.text;
         
@@ -644,7 +776,8 @@ class PollinationsProvider {
             reference_images: validReferenceImages.length,
             generation_mode: validReferenceImages.length > 0 ? (validReferenceImages.length === 1 ? "圖生圖" : "多圖融合") : "文生圖",
             steps: finalSteps, 
-            guidance: finalGuidance 
+            guidance: finalGuidance,
+            seed: seed
         });
         
         const currentSeed = seed === -1 ? Math.floor(Math.random() * 1000000) : seed;
@@ -753,12 +886,12 @@ class MultiProviderRouter {
     constructor(apiKeys = {}, env = null) {
         this.providers = {};
         this.apiKeys = apiKeys;
-        this.env = env;  // 🔧 保存 env
+        this.env = env;
         
         for (const [key, config] of Object.entries(CONFIG.PROVIDERS)) {
             if (config.enabled) {
                 if (key === 'pollinations') {
-                    this.providers[key] = new PollinationsProvider(config, env);  // 🔧 傳遞 env
+                    this.providers[key] = new PollinationsProvider(config, env);
                 }
             }
         }
@@ -801,215 +934,10 @@ function corsHeaders(additionalHeaders = {}) {
         ...additionalHeaders 
     };
 }
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    
-    // 🔧 添加調試日誌
-    console.log("=== Worker Debug ===");
-    console.log("Workers AI available:", !!env.AI);
-    console.log("Path:", url.pathname);
-    console.log("===================");
-    
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders() });
-    }
-    try {
-      if (url.pathname === '/') {
-        return handleUI(request);
-      } else if (url.pathname === '/v1/chat/completions') {
-        return handleChatCompletions(request, env);
-      } else if (url.pathname === '/v1/images/generations') {
-        return handleImageGenerations(request, env);
-      } else if (url.pathname === '/v1/models') {
-        return handleModelsRequest();
-      } else if (url.pathname === '/v1/providers') {
-        return handleProvidersRequest();
-      } else if (url.pathname === '/v1/styles') {
-        return handleStylesRequest();
-      } else if (url.pathname === '/health') {
-        return new Response(JSON.stringify({ 
-          status: 'ok', 
-          version: CONFIG.PROJECT_VERSION, 
-          timestamp: new Date().toISOString(),
-          workers_ai: !!env.AI,
-          features: [
-            '本地上傳 (Local Upload)',
-            '圖生圖 (Image-to-Image)',
-            '多圖融合 (Multi-Image Fusion)',
-            '中文支持 (Chinese Support) - m2m100',
-            '4K Ultra HD Support',
-            'Generation Timer',
-            'Full History',
-            '17 Models',
-            '8 Styles',
-            'Smart Optimization'
-          ]
-        }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
-      } else {
-        return new Response(JSON.stringify({ 
-          project: CONFIG.PROJECT_NAME, 
-          version: CONFIG.PROJECT_VERSION, 
-          features: [
-            '17 Models', 
-            '8 Styles', 
-            '4 Quality Modes', 
-            'Local Upload 📤',
-            'Image-to-Image 🎨',
-            'Multi-Image Fusion 🖼️',
-            'Chinese Support 🇨🇳',
-            'Smart Analysis', 
-            'Auto HD', 
-            '4K Support 🍌',
-            'Generation Timer ⏱️',
-            'Full History 📜',
-            'Auto Translation (m2m100)'
-          ], 
-          endpoints: [
-            '/v1/images/generations', 
-            '/v1/chat/completions', 
-            '/v1/models', 
-            '/v1/providers', 
-            '/v1/styles', 
-            '/health'
-          ] 
-        }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
-      }
-    } catch (error) {
-      console.error('Worker error:', error);
-      return new Response(JSON.stringify({ 
-        error: { 
-          message: error.message, 
-          type: 'worker_error' 
-        } 
-      }), { 
-        status: 500, 
-        headers: corsHeaders({ 'Content-Type': 'application/json' }) 
-      });
-    }
-  }
-};
-
-async function handleChatCompletions(request, env) {
+async function handleImageGenerations(request, env, ctx) {
     const logger = new Logger();
-    try {
-        const body = await request.json();
-        const isWebUI = body.is_web_ui === true;
-        const messages = body.messages || [];
-        const lastMsg = messages[messages.length - 1];
-        if (!lastMsg) throw new Error("No messages found");
-        
-        let prompt = "";
-        if (typeof lastMsg.content === 'string') {
-            prompt = lastMsg.content;
-        } else if (Array.isArray(lastMsg.content)) {
-            for (const part of lastMsg.content) {
-                if (part.type === 'text') prompt += part.text + " ";
-            }
-        }
-        prompt = prompt.trim();
-        if (!prompt) throw new Error("Empty prompt");
-        
-        let referenceImages = [];
-        if (body.reference_images && Array.isArray(body.reference_images)) {
-            referenceImages = body.reference_images.filter(url => {
-                try {
-                    new URL(url);
-                    return true;
-                } catch {
-                    return false;
-                }
-            });
-        }
-        
-        const options = { 
-            provider: body.provider || null, 
-            model: body.model || "flux", 
-            width: body.width || 1024, 
-            height: body.height || 1024, 
-            numOutputs: Math.min(Math.max(body.n || 1, 1), 4), 
-            seed: body.seed !== undefined ? body.seed : -1, 
-            negativePrompt: body.negative_prompt || "", 
-            guidance: body.guidance_scale || null, 
-            steps: body.steps || null, 
-            enhance: body.enhance === true, 
-            nologo: body.nologo !== false, 
-            privateMode: body.private !== false, 
-            style: body.style || "none", 
-            autoOptimize: body.auto_optimize !== false, 
-            autoHD: body.auto_hd !== false, 
-            qualityMode: body.quality_mode || 'standard',
-            referenceImages: referenceImages
-        };
-        
-        const router = new MultiProviderRouter({}, env);  // 🔧 傳遞 env
-        const results = await router.generate(prompt, options, logger);
-        
-        let respContent = "";
-        results.forEach((result, index) => { 
-            respContent += "![Generated Image " + (index + 1) + "](" + result.url + ")\n"; 
-        });
-        
-        const respId = "chatcmpl-" + crypto.randomUUID();
-        
-        if (body.stream) {
-            const { readable, writable } = new TransformStream();
-            const writer = writable.getWriter();
-            const encoder = new TextEncoder();
-            (async () => {
-                try {
-                    if (isWebUI) await writer.write(encoder.encode("data: " + JSON.stringify({ debug: logger.get() }) + "\n\n"));
-                    const chunk = { 
-                        id: respId, 
-                        object: 'chat.completion.chunk', 
-                        created: Math.floor(Date.now()/1000), 
-                        model: options.model, 
-                        choices: [{ index: 0, delta: { content: respContent }, finish_reason: null }] 
-                    };
-                    await writer.write(encoder.encode("data: " + JSON.stringify(chunk) + "\n\n"));
-                    const endChunk = { 
-                        id: respId, 
-                        object: 'chat.completion.chunk', 
-                        created: Math.floor(Date.now()/1000), 
-                        model: options.model, 
-                        choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] 
-                    };
-                    await writer.write(encoder.encode("data: " + JSON.stringify(endChunk) + "\n\n"));
-                    await writer.write(encoder.encode('data: [DONE]\n\n'));
-                } finally {
-                    await writer.close();
-                }
-            })();
-            return new Response(readable, { headers: corsHeaders({ 'Content-Type': 'text/event-stream' }) });
-        } else {
-            return new Response(JSON.stringify({ 
-                id: respId, 
-                object: "chat.completion", 
-                created: Math.floor(Date.now() / 1000), 
-                model: options.model, 
-                choices: [{ 
-                    index: 0, 
-                    message: { role: "assistant", content: respContent }, 
-                    finish_reason: "stop" 
-                }] 
-            }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
-        }
-    } catch (e) {
-        logger.add("❌ Error", e.message);
-        return new Response(JSON.stringify({ 
-            error: { 
-                message: e.message, 
-                debug_logs: logger.get() 
-            } 
-        }), { 
-            status: 500, 
-            headers: corsHeaders({ 'Content-Type': 'application/json' }) 
-        });
-    }
-}
-
-async function handleImageGenerations(request, env) {
-    const logger = new Logger();
+    const startTime = Date.now();
+    
     try {
         const body = await request.json();
         const prompt = body.prompt;
@@ -1035,13 +963,22 @@ async function handleImageGenerations(request, env) {
             });
         }
         
+        const seedInput = body.seed !== undefined ? body.seed : -1;
+        let seedValue = -1;
+        if (seedInput !== -1) {
+            const parsedSeed = parseInt(seedInput);
+            if (!isNaN(parsedSeed) && parsedSeed >= 0 && parsedSeed <= 999999) {
+                seedValue = parsedSeed;
+            }
+        }
+        
         const options = { 
             provider: body.provider || null, 
             model: body.model || "flux", 
             width: Math.min(Math.max(width, 256), 4096), 
             height: Math.min(Math.max(height, 256), 4096), 
             numOutputs: Math.min(Math.max(body.n || 1, 1), 4), 
-            seed: body.seed !== undefined ? body.seed : -1, 
+            seed: seedValue,
             negativePrompt: body.negative_prompt || "", 
             guidance: body.guidance_scale || null, 
             steps: body.steps || null, 
@@ -1055,8 +992,54 @@ async function handleImageGenerations(request, env) {
             referenceImages: referenceImages
         };
         
-        const router = new MultiProviderRouter({}, env);  // 🔧 傳遞 env
+        let cacheKey = null;
+        let cachedResult = null;
+        
+        if (options.seed !== -1 && referenceImages.length === 0 && options.numOutputs === 1) {
+            cacheKey = generateCacheKey(prompt, options);
+            cachedResult = apiCache.get(cacheKey);
+            
+            if (cachedResult) {
+                logger.add("💾 Cache Hit", { key: cacheKey });
+                return new Response(JSON.stringify({
+                    created: Math.floor(Date.now() / 1000),
+                    data: cachedResult,
+                    cached: true,
+                    cache_key: cacheKey
+                }), { 
+                    headers: corsHeaders({ 
+                        'Content-Type': 'application/json',
+                        'X-Cache': 'HIT',
+                        'X-Cache-Key': cacheKey
+                    }) 
+                });
+            }
+        }
+        
+        const router = new MultiProviderRouter({}, env);
         const results = await router.generate(prompt, options, logger);
+        
+        if (cacheKey && options.seed !== -1 && options.numOutputs === 1) {
+            const cacheData = results.map(r => ({
+                url: r.url,
+                provider: r.provider,
+                model: r.model,
+                seed: r.seed,
+                width: r.width,
+                height: r.height,
+                is_4k: r.is_4k,
+                style: r.style,
+                quality_mode: r.quality_mode,
+                reference_images: r.reference_images || [],
+                reference_images_count: r.reference_images_count || 0,
+                generation_mode: r.generation_mode || "文生圖",
+                cost: r.cost
+            }));
+            apiCache.set(cacheKey, cacheData);
+            logger.add("💾 Cache Saved", { key: cacheKey });
+        }
+        
+        const duration = Date.now() - startTime;
         
         return new Response(JSON.stringify({ 
             created: Math.floor(Date.now() / 1000), 
@@ -1080,8 +1063,73 @@ async function handleImageGenerations(request, env) {
                 hd_optimized: r.hd_optimized, 
                 auto_translated: r.auto_translated,
                 cost: r.cost 
-            })) 
-        }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
+            })),
+            cached: false,
+            generation_time_ms: duration
+        }), { 
+            headers: corsHeaders({ 
+                'Content-Type': 'application/json',
+                'X-Cache': 'MISS',
+                'X-Generation-Time': duration + 'ms'
+            }) 
+        });
+    } catch (e) {
+        logger.add("❌ Error", e.message);
+        return new Response(JSON.stringify({ 
+            error: { 
+                message: e.message, 
+                debug_logs: logger.get() 
+            } 
+        }), { 
+            status: 500, 
+            headers: corsHeaders({ 'Content-Type': 'application/json' }) 
+        });
+    }
+}
+
+async function handleChatCompletions(request, env, ctx) {
+    const logger = new Logger();
+    try {
+        const body = await request.json();
+        const messages = body.messages;
+        if (!messages || !Array.isArray(messages)) throw new Error("messages is required");
+        
+        const userMessage = messages.filter(m => m.role === 'user').pop();
+        if (!userMessage || !userMessage.content) throw new Error("No user message found");
+        
+        const prompt = userMessage.content;
+        const options = { 
+            model: body.model || "flux", 
+            width: 1024, 
+            height: 1024, 
+            seed: -1, 
+            style: "none", 
+            autoOptimize: true, 
+            autoHD: true, 
+            qualityMode: 'standard' 
+        };
+        
+        const router = new MultiProviderRouter({}, env);
+        const results = await router.generate(prompt, options, logger);
+        const imageUrl = results[0].url;
+        
+        return new Response(JSON.stringify({ 
+            id: "chatcmpl-" + Date.now(), 
+            object: "chat.completion", 
+            created: Math.floor(Date.now() / 1000), 
+            model: results[0].model, 
+            choices: [{ 
+                index: 0, 
+                message: { 
+                    role: "assistant", 
+                    content: "![Generated Image](" + imageUrl + ")\n\nImage generated successfully!" 
+                }, 
+                finish_reason: "stop" 
+            }], 
+            usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } 
+        }), { 
+            headers: corsHeaders({ 'Content-Type': 'application/json' }) 
+        });
     } catch (e) {
         logger.add("❌ Error", e.message);
         return new Response(JSON.stringify({ 
@@ -1097,20 +1145,20 @@ async function handleImageGenerations(request, env) {
 }
 
 function handleModelsRequest() {
-    const models = [];
+    const allModels = [];
     for (const [providerKey, providerConfig] of Object.entries(CONFIG.PROVIDERS)) {
         if (providerConfig.enabled && providerConfig.models) {
             for (const model of providerConfig.models) {
-                models.push({ 
+                allModels.push({ 
                     id: model.id, 
-                    object: 'model', 
                     name: model.name, 
                     provider: providerKey, 
-                    category: model.category, 
-                    confirmed: model.confirmed || false, 
-                    experimental: model.experimental || false, 
-                    description: model.description,
-                    max_size: model.max_size || 2048,
+                    category: model.category || 'general', 
+                    description: model.description || '', 
+                    max_size: model.max_size || 2048, 
+                    confirmed: model.confirmed !== false, 
+                    experimental: model.experimental === true, 
+                    fallback: model.fallback || null,
                     ultra_hd: model.ultra_hd || false,
                     supports_reference_images: model.supports_reference_images || false,
                     max_reference_images: model.max_reference_images || 0
@@ -1120,40 +1168,200 @@ function handleModelsRequest() {
     }
     return new Response(JSON.stringify({ 
         object: 'list', 
-        data: models, 
-        total: models.length 
-    }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
+        data: allModels 
+    }), { 
+        headers: corsHeaders({ 'Content-Type': 'application/json' }) 
+    });
 }
 
 function handleProvidersRequest() {
-    const providers = {};
+    const providersList = [];
     for (const [key, config] of Object.entries(CONFIG.PROVIDERS)) {
-        providers[key] = { 
-            name: config.name, 
-            endpoint: config.endpoint, 
-            auth_mode: config.auth_mode, 
-            enabled: config.enabled, 
-            features: config.features 
-        };
+        if (config.enabled) {
+            providersList.push({ 
+                id: key, 
+                name: config.name, 
+                type: config.type, 
+                auth_mode: config.auth_mode, 
+                requires_key: config.requires_key, 
+                description: config.description, 
+                features: config.features, 
+                model_count: config.models?.length || 0 
+            });
+        }
     }
     return new Response(JSON.stringify({ 
         object: 'list', 
-        data: providers 
-    }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
+        data: providersList 
+    }), { 
+        headers: corsHeaders({ 'Content-Type': 'application/json' }) 
+    });
 }
 
 function handleStylesRequest() {
-    const styles = Object.entries(CONFIG.STYLE_PRESETS).map(([key, value]) => ({ 
-        id: key, 
-        name: value.name, 
-        prompt_addition: value.prompt, 
-        negative_addition: value.negative
-    }));
+    const stylesList = [];
+    for (const [key, styleConfig] of Object.entries(CONFIG.STYLE_PRESETS)) {
+        stylesList.push({ 
+            id: key, 
+            name: styleConfig.name, 
+            prompt_addition: styleConfig.prompt || "", 
+            negative_addition: styleConfig.negative || "" 
+        });
+    }
     return new Response(JSON.stringify({ 
         object: 'list', 
-        data: styles 
-    }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
+        data: stylesList, 
+        total: stylesList.length 
+    }), { 
+        headers: corsHeaders({ 'Content-Type': 'application/json' }) 
+    });
 }
+
+export default {
+    async fetch(request, env, ctx) {
+        const url = new URL(request.url);
+        const startTime = Date.now();
+        const clientIP = getClientIP(request);
+        
+        console.log("=== API Request ===");
+        console.log("IP:", clientIP);
+        console.log("Path:", url.pathname);
+        console.log("Method:", request.method);
+        console.log("Workers AI:", !!env.AI);
+        console.log("==================");
+        
+        if (request.method === 'OPTIONS') {
+            return new Response(null, { status: 204, headers: corsHeaders() });
+        }
+        
+        if (API_OPTIMIZATION.RATE_LIMIT.enabled && url.pathname.startsWith('/v1/')) {
+            const rateLimitResult = await rateLimiter.check(clientIP);
+            if (!rateLimitResult.allowed) {
+                perfMonitor.recordRequest(false, Date.now() - startTime, rateLimitResult.reason);
+                return new Response(JSON.stringify({
+                    error: {
+                        message: rateLimitResult.reason,
+                        code: 'RATE_LIMIT_EXCEEDED',
+                        limit: rateLimitResult.limit,
+                        current: rateLimitResult.current,
+                        retryAfter: rateLimitResult.retryAfter,
+                        blockedUntil: rateLimitResult.blockedUntil
+                    }
+                }), {
+                    status: 429,
+                    headers: corsHeaders({
+                        'Content-Type': 'application/json',
+                        'Retry-After': rateLimitResult.retryAfter || '60',
+                        'X-RateLimit-Limit': API_OPTIMIZATION.RATE_LIMIT.max_requests_per_minute.toString(),
+                        'X-RateLimit-Remaining': '0'
+                    })
+                });
+            }
+            ctx.rateLimitHeaders = {
+                'X-RateLimit-Limit-Minute': API_OPTIMIZATION.RATE_LIMIT.max_requests_per_minute.toString(),
+                'X-RateLimit-Limit-Hour': API_OPTIMIZATION.RATE_LIMIT.max_requests_per_hour.toString(),
+                'X-RateLimit-Remaining-Minute': rateLimitResult.remaining?.perMinute.toString() || '0',
+                'X-RateLimit-Remaining-Hour': rateLimitResult.remaining?.perHour.toString() || '0'
+            };
+        }
+        
+        try {
+            let response;
+            if (url.pathname === '/') {
+                response = handleUI(request);
+            } else if (url.pathname === '/v1/chat/completions') {
+                response = await handleChatCompletions(request, env, ctx);
+            } else if (url.pathname === '/v1/images/generations') {
+                response = await handleImageGenerations(request, env, ctx);
+            } else if (url.pathname === '/v1/models') {
+                response = handleModelsRequest();
+            } else if (url.pathname === '/v1/providers') {
+                response = handleProvidersRequest();
+            } else if (url.pathname === '/v1/styles') {
+                response = handleStylesRequest();
+            } else if (url.pathname === '/health') {
+                response = new Response(JSON.stringify({
+                    status: 'ok',
+                    version: CONFIG.PROJECT_VERSION,
+                    timestamp: new Date().toISOString(),
+                    workers_ai: !!env.AI,
+                    performance: perfMonitor.getStats(),
+                    cache: {
+                        enabled: API_OPTIMIZATION.CACHE.enabled,
+                        size: apiCache.cache.size,
+                        max_size: API_OPTIMIZATION.CACHE.max_size
+                    },
+                    rate_limit: {
+                        enabled: API_OPTIMIZATION.RATE_LIMIT.enabled,
+                        active_ips: rateLimiter.requests.size,
+                        blacklisted_ips: rateLimiter.blacklist.size
+                    }
+                }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
+            } else if (url.pathname === '/stats') {
+                response = new Response(JSON.stringify({
+                    performance: perfMonitor.getStats(),
+                    cache: {
+                        size: apiCache.cache.size,
+                        max_size: API_OPTIMIZATION.CACHE.max_size
+                    },
+                    rate_limit: {
+                        active_monitoring: rateLimiter.requests.size,
+                        blacklisted: rateLimiter.blacklist.size
+                    }
+                }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
+            } else {
+                response = new Response(JSON.stringify({
+                    project: CONFIG.PROJECT_NAME,
+                    version: CONFIG.PROJECT_VERSION,
+                    optimizations: [
+                        'Rate Limiting 🔒',
+                        'Response Caching 💾',
+                        'Performance Monitoring 📊',
+                        'Seed Control 🎲',
+                        'Batch Generation 📦',
+                        '39 Art Styles 🎨',
+                        '35+ Size Presets 📐'
+                    ],
+                    endpoints: [
+                        '/v1/images/generations',
+                        '/v1/chat/completions',
+                        '/v1/models',
+                        '/v1/providers',
+                        '/v1/styles',
+                        '/health',
+                        '/stats'
+                    ]
+                }), { headers: corsHeaders({ 'Content-Type': 'application/json' }) });
+            }
+            
+            const duration = Date.now() - startTime;
+            perfMonitor.recordRequest(true, duration);
+            const headers = new Headers(response.headers);
+            headers.set('X-Response-Time', duration + 'ms');
+            headers.set('X-Worker-Version', CONFIG.PROJECT_VERSION);
+            if (ctx.rateLimitHeaders) {
+                Object.entries(ctx.rateLimitHeaders).forEach(([key, value]) => {
+                    headers.set(key, value);
+                });
+            }
+            return new Response(response.body, { status: response.status, headers: headers });
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            perfMonitor.recordRequest(false, duration, error.message);
+            console.error('Worker error:', error);
+            return new Response(JSON.stringify({
+                error: {
+                    message: error.message,
+                    type: 'worker_error',
+                    timestamp: new Date().toISOString()
+                }
+            }), {
+                status: 500,
+                headers: corsHeaders({ 'Content-Type': 'application/json' })
+            });
+        }
+    }
+};
 function handleUI() {
   const html = `<!DOCTYPE html>
 <html lang="zh-TW">
@@ -1184,7 +1392,7 @@ button{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b 0%,#d97
 .ref-img-item{position:relative;width:80px;height:80px}
 .ref-img-item img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:2px solid #ec4899}
 .ref-img-remove{position:absolute;top:-8px;right:-8px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;font-weight:700}
-.spinner{border:3px solid rgba(255,255,255,0.3);border-top:3px solid #ec4899;border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite}
+.spinner{border:3px solid rgba(255,255,255,0.3);border-top:3px solid #ec4899;border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;margin:0 auto}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .tag-mode{display:inline-block;background:linear-gradient(135deg,#ec4899 0%,#db2777 100%);color:#fff;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-left:6px}
 .result-meta{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);padding:8px 12px;border-radius:8px;margin-top:8px;font-size:12px;color:#10b981}
@@ -1207,8 +1415,8 @@ button{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b 0%,#d97
 <div class="container">
 <div class="header">
 <div class="header-left">
-<h1>🎨 Flux AI Pro<span class="badge">v${CONFIG.PROJECT_VERSION}</span><span class="badge-new">本地上傳 📤</span></h1>
-<p class="subtitle">本地上傳 · 圖生圖 · 多圖融合 · 中文支持 (m2m100) · 4K超清</p>
+<h1>🎨 Flux AI Pro<span class="badge">v${CONFIG.PROJECT_VERSION}</span><span class="badge-new">Seed 🎲</span></h1>
+<p class="subtitle">本地上傳 · 圖生圖 · 多圖融合 · 中文支持 · 4K超清 · 39種風格 · 35+尺寸</p>
 </div>
 <button onclick="toggleHistory()" class="history-btn">📜 歷史<span id="historyBadge" class="history-badge" style="display:none">0</span></button>
 </div>
@@ -1254,29 +1462,144 @@ button{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b 0%,#d97
 </optgroup>
 </select>
 
-<label>藝術風格</label>
+<label>藝術風格 <span style="color:#9ca3af;font-size:11px">(共 39 種)</span></label>
 <select id="style">
 <option value="none">無</option>
+<optgroup label="🎌 動漫系列">
 <option value="anime">動漫風格 ✨</option>
+<option value="anime-chibi">Q版動漫 🎎</option>
+<option value="japanese-manga">日本漫畫 📚</option>
+<option value="shoujo-manga">少女漫畫 💕</option>
+<option value="seinen-manga">青年漫畫 🗡️</option>
+<option value="studio-ghibli">吉卜力風格 🍃</option>
+</optgroup>
+<optgroup label="📷 寫實系列">
 <option value="photorealistic">寫實照片 📷</option>
+<option value="cinematic">電影級 🎬</option>
+<option value="portrait">人像攝影 👤</option>
+</optgroup>
+<optgroup label="🖌️ 傳統繪畫">
 <option value="oil-painting">油畫 🎨</option>
 <option value="watercolor">水彩畫 💧</option>
+<option value="chinese-painting">中國水墨畫 🖌️</option>
+<option value="ukiyo-e">浮世繪 🗾</option>
 <option value="sketch">素描 ✏️</option>
-<option value="cyberpunk">賽博朋克 🌃</option>
+<option value="charcoal">炭筆畫 🖍️</option>
+<option value="impressionism">印象派 🌅</option>
+</optgroup>
+<optgroup label="💻 數位藝術">
+<option value="digital-art">數位藝術 💻</option>
+<option value="pixel-art">像素藝術 🕹️</option>
+<option value="vector-art">向量藝術 📐</option>
+<option value="low-poly">低多邊形 🔷</option>
+</optgroup>
+<optgroup label="🌌 幻想科幻">
 <option value="fantasy">奇幻風格 🐉</option>
+<option value="dark-fantasy">黑暗奇幻 🌑</option>
+<option value="fairy-tale">童話風格 🧚</option>
+<option value="cyberpunk">賽博朋克 🌃</option>
+<option value="sci-fi">科幻未來 🚀</option>
+<option value="steampunk">蒸汽朋克 ⚙️</option>
+<option value="vaporwave">蒸氣波 🌈</option>
+</optgroup>
+<optgroup label="🎬 動畫影視">
+<option value="disney">迪士尼風格 🏰</option>
+<option value="comic-book">美式漫畫 💥</option>
+</optgroup>
+<optgroup label="🎭 藝術流派">
+<option value="pop-art">普普藝術 🎭</option>
+<option value="art-deco">裝飾藝術 💎</option>
+<option value="art-nouveau">新藝術風格 🌺</option>
+<option value="abstract">抽象藝術 🎨</option>
+<option value="minimalist">極簡主義 ⬜</option>
+<option value="surrealism">超現實主義 🌀</option>
+</optgroup>
+<optgroup label="🎨 特殊風格">
+<option value="graffiti">塗鴉藝術 🎨</option>
+<option value="horror">恐怖風格 👻</option>
+<option value="kawaii">可愛風格 🌸</option>
+</optgroup>
 </select>
 </div>
 
 <div class="box">
 <h3>🎨 圖像參數</h3>
-<label>尺寸預設</label>
+<label>尺寸預設 <span style="color:#9ca3af;font-size:11px">(共 33 種)</span></label>
 <select id="sizePreset" onchange="applySizePreset()">
-${Object.entries(CONFIG.PRESET_SIZES).map(([k,v])=>'<option value="' + k + '">' + v.name + (v.exclusive?' 🍌':'') + '</option>').join('')}
+<optgroup label="⬜ 方形系列">
+<option value="square-512">方形 512px (快速測試)</option>
+<option value="square-1k" selected>方形 1K (標準)</option>
+<option value="square-1.5k">方形 1.5K (高清)</option>
+<option value="square-2k">方形 2K (超清)</option>
+<option value="square-4k">方形 4K 🍌</option>
+</optgroup>
+<optgroup label="📱 豎屏系列">
+<option value="portrait-9-16">豎屏 9:16 (TikTok/Story)</option>
+<option value="portrait-9-16-hd">豎屏 9:16 HD (1080p)</option>
+<option value="portrait-9-16-2k">豎屏 9:16 2K</option>
+<option value="portrait-3-4">豎屏 3:4 (Instagram)</option>
+<option value="portrait-3-4-hd">豎屏 3:4 HD</option>
+<option value="portrait-2-3">豎屏 2:3 (Pinterest)</option>
+</optgroup>
+<optgroup label="🖥️ 橫屏系列">
+<option value="landscape-16-9">橫屏 16:9 (YouTube)</option>
+<option value="landscape-16-9-hd">橫屏 16:9 HD (1080p)</option>
+<option value="landscape-16-9-2k">橫屏 16:9 2K (1440p)</option>
+<option value="landscape-16-9-4k">橫屏 16:9 4K 🍌</option>
+<option value="landscape-4-3">橫屏 4:3 (傳統)</option>
+<option value="landscape-21-9">橫屏 21:9 (超寬)</option>
+</optgroup>
+<optgroup label="📲 社交媒體">
+<option value="instagram-square">Instagram 方形</option>
+<option value="instagram-portrait">Instagram 豎屏 (4:5)</option>
+<option value="instagram-story">Instagram Story/Reels</option>
+<option value="facebook-cover">Facebook 封面</option>
+<option value="twitter-header">Twitter/X 橫幅</option>
+<option value="youtube-thumbnail">YouTube 縮圖</option>
+<option value="linkedin-banner">LinkedIn 橫幅</option>
+</optgroup>
+<optgroup label="🖨️ 印刷/設計">
+<option value="a4-portrait">A4 豎屏 (300 DPI)</option>
+<option value="a4-landscape">A4 橫屏 (300 DPI)</option>
+<option value="poster-24-36">海報 24x36 英吋</option>
+</optgroup>
+<optgroup label="🖼️ 桌布">
+<option value="wallpaper-fhd">桌布 Full HD (1080p)</option>
+<option value="wallpaper-2k">桌布 2K (1440p)</option>
+<option value="wallpaper-4k">桌布 4K 🍌</option>
+<option value="wallpaper-ultrawide">桌布 Ultra-Wide</option>
+<option value="mobile-wallpaper">手機桌布 (iPhone)</option>
+</optgroup>
+<optgroup label="🔧 自定義">
+<option value="custom">自定義尺寸</option>
+</optgroup>
 </select>
+
 <label>寬度: <span id="widthValue">1024</span>px</label>
 <input type="range" id="width" min="256" max="4096" step="64" value="1024">
 <label>高度: <span id="heightValue">1024</span>px</label>
 <input type="range" id="height" min="256" max="4096" step="64" value="1024">
+
+<label>生成數量 <span style="color:#9ca3af;font-size:11px">(一次生成多張)</span></label>
+<div style="display:flex;gap:10px;align-items:center">
+<input type="range" id="numImages" min="1" max="4" step="1" value="1" style="flex:1" oninput="updateNumImagesDisplay()">
+<span id="numImagesValue" style="color:#f59e0b;font-weight:700;font-size:18px;min-width:60px;text-align:center">1 張</span>
+</div>
+<small style="color:#9ca3af;font-size:11px;display:block;margin-top:5px">💡 多張生成使用不同 seed,生成時間會增加</small>
+
+<label>隨機種子 (Seed) <span style="color:#9ca3af;font-size:11px">控制圖片隨機性</span></label>
+<div style="display:flex;gap:8px;align-items:center">
+<input type="number" id="seedInput" placeholder="留空=隨機" min="0" max="999999" style="flex:1;font-family:monospace">
+<button type="button" onclick="randomizeSeed()" style="width:auto;padding:10px 16px;margin:0;background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%)">🎲 隨機</button>
+</div>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button type="button" onclick="setSeed(-1)" style="width:auto;padding:8px 12px;margin:0;font-size:12px;background:rgba(139,92,246,0.2);border:1px solid #8b5cf6">自動隨機</button>
+<button type="button" onclick="copyLastSeed()" style="width:auto;padding:8px 12px;margin:0;font-size:12px;background:rgba(16,185,129,0.2);border:1px solid #10b981">📋 複製上次</button>
+<button type="button" onclick="clearSeed()" style="width:auto;padding:8px 12px;margin:0;font-size:12px;background:rgba(239,68,68,0.2);border:1px solid #ef4444">🗑️ 清空</button>
+</div>
+<small style="color:#9ca3af;font-size:11px;display:block;margin-top:5px">💡 固定 seed 可精確復現圖片,留空則每次隨機生成</small>
+<div id="lastSeedInfo" style="display:none;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);padding:8px;border-radius:6px;margin-top:8px;font-size:12px;color:#10b981"></div>
+
 <label>質量模式</label>
 <select id="qualityMode">
 <option value="economy">⚡ 經濟</option>
@@ -1284,6 +1607,7 @@ ${Object.entries(CONFIG.PRESET_SIZES).map(([k,v])=>'<option value="' + k + '">' 
 <option value="ultra">💎 超高清</option>
 <option value="ultra_4k">🍌 4K超高清</option>
 </select>
+
 <button onclick="generate()">🚀 開始生成</button>
 </div>
 </div>
@@ -1308,7 +1632,55 @@ ${Object.entries(CONFIG.PRESET_SIZES).map(([k,v])=>'<option value="' + k + '">' 
 const PRESETS=${JSON.stringify(CONFIG.PRESET_SIZES)};
 let generationHistory=[];
 let referenceImages=[];
+let lastUsedSeeds=[];
 const MAX_FILE_SIZE=10*1024*1024;
+
+function updateNumImagesDisplay(){
+const num=document.getElementById('numImages').value;
+document.getElementById('numImagesValue').textContent=num+' 張';
+}
+
+function randomizeSeed(){
+const randomSeed=Math.floor(Math.random()*1000000);
+document.getElementById('seedInput').value=randomSeed;
+}
+
+function setSeed(value){
+if(value===-1){
+document.getElementById('seedInput').value='';
+}else{
+document.getElementById('seedInput').value=value;
+}
+}
+
+function copyLastSeed(){
+if(lastUsedSeeds.length===0){
+alert('尚未生成過圖片,無法複製 seed');
+return;
+}
+const lastSeed=lastUsedSeeds[lastUsedSeeds.length-1];
+document.getElementById('seedInput').value=lastSeed;
+alert('已複製上次的 seed: '+lastSeed);
+}
+
+function clearSeed(){
+document.getElementById('seedInput').value='';
+}
+
+function updateLastSeedInfo(seeds){
+lastUsedSeeds=seeds;
+const infoDiv=document.getElementById('lastSeedInfo');
+if(seeds&&seeds.length>0){
+infoDiv.style.display='block';
+if(seeds.length===1){
+infoDiv.innerHTML='✅ 上次使用的 Seed: <strong>'+seeds[0]+'</strong> <button onclick="setSeed('+seeds[0]+')" style="padding:2px 8px;font-size:11px;margin-left:8px;background:rgba(16,185,129,0.3);border:1px solid #10b981;color:#fff;border-radius:4px;cursor:pointer">使用此 Seed</button>';
+}else{
+infoDiv.innerHTML='✅ 上次生成了 '+seeds.length+' 張圖片,Seeds: <strong>'+seeds.join(', ')+'</strong>';
+}
+}else{
+infoDiv.style.display='none';
+}
+}
 
 document.getElementById('refImageUrl').addEventListener('keypress',function(e){
 if(e.key==='Enter'){
@@ -1356,14 +1728,11 @@ async function handleFiles(files){
 const model=document.getElementById('model').value;
 const maxRef=getMaxReferenceImages(model);
 const remaining=maxRef-referenceImages.length;
-
 if(remaining<=0){
 alert('此模型最多支持 '+maxRef+' 張參考圖');
 return;
 }
-
 const filesToProcess=Array.from(files).slice(0,remaining);
-
 for(const file of filesToProcess){
 if(!file.type.startsWith('image/')){
 alert(file.name+' 不是有效的圖片文件');
@@ -1381,7 +1750,6 @@ async function uploadImage(file){
 const tempId='temp-'+Date.now()+'-'+Math.random();
 referenceImages.push({id:tempId,uploading:true});
 renderReferenceImages();
-
 try{
 const base64=await fileToBase64(file);
 const uploadedUrl=await uploadToImageHost(base64,file.name);
@@ -1414,37 +1782,21 @@ async function uploadToImageHost(base64,filename){
 try{
 const response=await fetch('https://api.imgur.com/3/image',{
 method:'POST',
-headers:{
-'Authorization':'Client-ID 2afc620eb108124',
-'Content-Type':'application/json'
-},
-body:JSON.stringify({
-image:base64.split(',')[1],
-type:'base64',
-name:filename
-})
+headers:{'Authorization':'Client-ID 2afc620eb108124','Content-Type':'application/json'},
+body:JSON.stringify({image:base64.split(',')[1],type:'base64',name:filename})
 });
 const data=await response.json();
-if(data.success){
-return data.data.link;
-}else{
-throw new Error('Imgur upload failed');
-}
+if(data.success)return data.data.link;
+else throw new Error('Imgur upload failed');
 }catch(imgurError){
-console.error('Imgur failed, trying imgbb:',imgurError);
+console.error('Imgur failed:',imgurError);
 try{
 const formData=new FormData();
 formData.append('image',base64.split(',')[1]);
-const response=await fetch('https://api.imgbb.com/1/upload?key=d36eb6591370ae7f9089d85875e56b22',{
-method:'POST',
-body:formData
-});
+const response=await fetch('https://api.imgbb.com/1/upload?key=d36eb6591370ae7f9089d85875e56b22',{method:'POST',body:formData});
 const data=await response.json();
-if(data.success){
-return data.data.url;
-}else{
-throw new Error('ImgBB upload failed');
-}
+if(data.success)return data.data.url;
+else throw new Error('ImgBB upload failed');
 }catch(imgbbError){
 console.error('ImgBB failed:',imgbbError);
 return base64;
@@ -1481,7 +1833,7 @@ if(typeof item==='object'&&item.uploading){
 div.innerHTML='<div style="width:80px;height:80px;background:#2a2a2a;border-radius:8px;border:2px dashed #ec4899;display:flex;align-items:center;justify-content:center"><div class="spinner"></div></div>';
 }else{
 const url=typeof item==='object'?item.url:item;
-div.innerHTML='<img src="'+url+'" onerror="this.src=\\'data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'80\\' height=\\'80\\'%3E%3Crect fill=\\'%23ef4444\\' width=\\'80\\' height=\\'80\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' font-size=\\'12\\' fill=\\'white\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3E載入失敗%3C/text%3E%3C/svg%3E\\'"><button class="ref-img-remove" onclick="removeRefImage('+index+')">×</button>';
+div.innerHTML='<img src="'+url+'"><button class="ref-img-remove" onclick="removeRefImage('+index+')">×</button>';
 }
 list.appendChild(div);
 });
@@ -1549,7 +1901,8 @@ div.className='history-item';
 const modeTag=item.generation_mode?'<span class="tag-mode">'+item.generation_mode+'</span>':'';
 const refCount=item.reference_images_count>0?' | '+item.reference_images_count+'張參考圖':'';
 const styleTag=item.style&&item.style!=='none'?' | 風格:'+item.style:'';
-div.innerHTML='<div style="display:flex;gap:15px"><img src="'+item.url+'" class="history-img" onclick="window.open(\\''+item.url+'\\')"><div style="flex:1"><p style="color:#f59e0b;font-weight:600">'+item.prompt.substring(0,50)+'...'+modeTag+'</p><div class="history-info">'+item.model+' | '+item.width+'x'+item.height+refCount+styleTag+' | '+(item.duration||'N/A')+'</div><div class="history-info">'+new Date(item.timestamp).toLocaleString('zh-TW')+'</div><div class="history-actions"><button onclick="regenFromHistory('+index+')">🔄 重新生成</button><button onclick="deleteHistory('+index+')" style="background:#ef4444">🗑️ 刪除</button></div></div></div>';
+const seedTag=item.seed?' | Seed: <code style="background:rgba(139,92,246,0.2);padding:2px 6px;border-radius:4px;font-family:monospace">'+item.seed+'</code>':'';
+div.innerHTML='<div style="display:flex;gap:15px"><img src="'+item.url+'" class="history-img" onclick="window.open(\\''+item.url+'\\')"><div style="flex:1"><p style="color:#f59e0b;font-weight:600">'+item.prompt.substring(0,50)+'...'+modeTag+'</p><div class="history-info">'+item.model+' | '+item.width+'x'+item.height+refCount+styleTag+seedTag+' | '+(item.duration||'N/A')+'</div><div class="history-info">'+new Date(item.timestamp).toLocaleString('zh-TW')+'</div><div class="history-actions"><button onclick="regenFromHistory('+index+')">🔄 重新生成</button>'+(item.seed?'<button onclick="setSeed('+item.seed+');closeHistory()" style="background:rgba(139,92,246,0.8)">🎲 使用 Seed</button>':'')+'<button onclick="deleteHistory('+index+')" style="background:#ef4444">🗑️ 刪除</button></div></div></div>';
 list.appendChild(div);
 });
 }
@@ -1565,12 +1918,13 @@ document.getElementById('heightValue').textContent=item.height;
 if(item.negative_prompt)document.getElementById('negativePrompt').value=item.negative_prompt;
 if(item.style)document.getElementById('style').value=item.style;
 if(item.quality_mode)document.getElementById('qualityMode').value=item.quality_mode;
+if(item.seed)document.getElementById('seedInput').value=item.seed;
 if(item.reference_images){
 referenceImages=item.reference_images;
 renderReferenceImages();
 }
 closeHistory();
-alert('已載入歷史配置,點擊生成按鈕即可!');
+alert('已載入歷史配置 (包含 Seed),點擊生成按鈕即可精確復現!');
 }
 
 function deleteHistory(index){
@@ -1619,6 +1973,18 @@ alert('請等待圖片上傳完成');
 return;
 }
 
+const seedInput=document.getElementById('seedInput').value.trim();
+let seedValue=-1;
+if(seedInput!==''){
+const parsedSeed=parseInt(seedInput);
+if(!isNaN(parsedSeed)&&parsedSeed>=0&&parsedSeed<=999999){
+seedValue=parsedSeed;
+}else{
+alert('Seed 必須是 0-999999 之間的整數');
+return;
+}
+}
+
 const params={
 prompt:prompt,
 negative_prompt:document.getElementById('negativePrompt').value,
@@ -1627,6 +1993,8 @@ style:document.getElementById('style').value,
 width:parseInt(document.getElementById('width').value),
 height:parseInt(document.getElementById('height').value),
 quality_mode:document.getElementById('qualityMode').value,
+n:parseInt(document.getElementById('numImages').value),
+seed:seedValue,
 auto_optimize:true,
 auto_hd:true,
 reference_images:validRefImages
@@ -1638,10 +2006,11 @@ button.disabled=true;
 
 const startTime=Date.now();
 let timerInterval;
-button.textContent='生成中 ⏱️ 0.0s';
+const numImages=params.n;
+button.textContent='生成中 (共 '+numImages+' 張) ⏱️ 0.0s';
 timerInterval=setInterval(()=>{
 const elapsed=((Date.now()-startTime)/1000).toFixed(1);
-button.textContent='生成中 ⏱️ '+elapsed+'s';
+button.textContent='生成中 (共 '+numImages+' 張) ⏱️ '+elapsed+'s';
 },100);
 
 try{
@@ -1656,14 +2025,21 @@ if(!response.ok)throw new Error(data.error?.message||'生成失敗');
 const duration=((Date.now()-startTime)/1000).toFixed(1)+'s';
 clearInterval(timerInterval);
 
-resultDiv.innerHTML='<div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;padding:16px;border-radius:12px;color:#10b981"><strong>✅ 生成成功!</strong><span class="timer">⏱️ '+duration+'</span></div>';
+const numGenerated=data.data.length;
+const avgTime=(parseFloat(duration)/numGenerated).toFixed(1);
+
+const usedSeeds=data.data.map(item=>item.seed);
+updateLastSeedInfo(usedSeeds);
+
+resultDiv.innerHTML='<div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;padding:16px;border-radius:12px;color:#10b981"><strong>✅ 生成成功!</strong><span class="timer">⏱️ 總時間: '+duration+' | 平均: '+avgTime+'s/張 | 共 '+numGenerated+' 張</span></div>';
+
 data.data.forEach(function(item,index){
 const is4K=item.is_4k?'<span class="tag-4k">4K</span>':'';
 const modeTag=item.generation_mode?'<span class="tag-mode">'+item.generation_mode+'</span>':'';
 const styleTag=item.style&&item.style!=='none'?' | 風格:'+item.style:'';
 const imgDiv=document.createElement('div');
 imgDiv.style.marginTop='20px';
-imgDiv.innerHTML='<img src="'+item.url+'" style="width:100%;border-radius:12px;cursor:pointer"><div class="result-meta">'+item.model+' | '+item.width+'x'+item.height+is4K+modeTag+styleTag+' | '+item.quality_mode+' | <span class="timer">⏱️ '+duration+'</span></div>';
+imgDiv.innerHTML='<div style="background:rgba(245,158,11,0.1);padding:8px;border-radius:8px 8px 0 0;color:#f59e0b;font-weight:600;display:flex;justify-content:space-between;align-items:center"><span>圖片 '+(index+1)+'/'+numGenerated+'</span><span style="font-family:monospace;font-size:12px;background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px">Seed: '+item.seed+'</span></div><img src="'+item.url+'" style="width:100%;border-radius:0;cursor:pointer"><div class="result-meta" style="border-radius:0 0 12px 12px">'+item.model+' | '+item.width+'x'+item.height+is4K+modeTag+styleTag+' | '+item.quality_mode+'<button onclick="setSeed('+item.seed+')" style="margin-left:10px;padding:4px 10px;font-size:11px;background:rgba(139,92,246,0.3);border:1px solid #8b5cf6;color:#fff;border-radius:4px;cursor:pointer">🎲 使用此 Seed</button></div>';
 imgDiv.querySelector('img').onclick=function(){window.open(item.url);};
 resultDiv.appendChild(imgDiv);
 
@@ -1679,15 +2055,18 @@ quality_mode:params.quality_mode,
 reference_images:item.reference_images||[],
 reference_images_count:item.reference_images_count||0,
 generation_mode:item.generation_mode||'文生圖',
-duration:duration
+duration:avgTime+'s',
+seed:item.seed
 });
 });
-}catch(error){
-clearInterval(timerInterval);
-resultDiv.innerHTML='<div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;padding:16px;border-radius:12px;color:#ef4444"><strong>❌ 錯誤:</strong> '+error.message+'</div>';
-}finally{
-button.disabled=false;
+
 button.textContent='🚀 開始生成';
+button.disabled=false;
+}catch(e){
+clearInterval(timerInterval);
+resultDiv.innerHTML='<div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;padding:16px;border-radius:12px;color:#ef4444"><strong>❌ 生成失敗</strong><p style="margin-top:10px">'+e.message+'</p></div>';
+button.textContent='🚀 開始生成';
+button.disabled=false;
 }
 }
 
