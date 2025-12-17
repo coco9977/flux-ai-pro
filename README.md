@@ -2,14 +2,16 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-9.5.1--fixed-blue)
+![Version](https://img.shields.io/badge/version-9.5.2--bytes-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-orange)
 ![API](https://img.shields.io/badge/API-Pollinations.ai-purple)
 
 **基於 Cloudflare Workers 的專業 AI 圖像生成服務**
 
-[English](#english) | [中文](#中文)
+**✨ 最新版本：9.5.2-bytes - 返回圖片字節數據**
+
+[English](#english) | [中文](#中文) | [更新記錄](#更新記錄)
 
 </div>
 
@@ -57,6 +59,12 @@
   - 支持官方 API Key
   - 匿名模式可用
   - 環境變量配置
+
+- 🆕 **圖片字節返回** (v9.5.2-bytes)
+  - 直接返回圖片二進制數據
+  - 不暴露 Pollinations URL
+  - 支持單張/批量生成
+  - HTTP Headers 傳遞元數據
 
 ### 📦 技術棧
 
@@ -119,9 +127,6 @@ compatibility_date = "2024-12-17"
 
 [ai]
 binding = "AI"
-
-[limits]
-cpu_ms = 50000
 
 compatibility_flags = ["nodejs_compat"]
 
@@ -221,6 +226,7 @@ flux-ai-pro/
 ├── worker.js # 主程序
 ├── wrangler.toml # Cloudflare 配置
 ├── README.md # 說明文檔
+├── CHANGELOG.md # 更新記錄
 └── package.json # 依賴配置（可選）
 
 text
@@ -246,21 +252,140 @@ text
 #### Q: 歷史記錄丟失？
 A: 歷史記錄保存在瀏覽器 localStorage，清除瀏覽器數據會丟失。
 
-### 📜 更新日誌
+#### Q: 免費計劃 CPU 限制錯誤？
+A: 移除 `wrangler.toml` 中的 `[limits]` 配置段，或升級到付費計劃。
+
+### 📜 更新記錄
+
+#### v9.5.2-bytes (2025-12-17) 🎉 最新
+**🎯 重大更新**
+- ✅ **返回圖片字節數據**：不再返回 Pollinations URL，直接返回圖片二進制數據
+- ✅ **雙響應模式**：
+  - 單張圖片：直接返回圖片字節（Content-Type: image/png）
+  - 多張圖片：返回 JSON 格式（包含 base64 編碼）
+
+**🔧 技術改進**
+- 添加圖片 Blob 和 ArrayBuffer 處理
+- HTTP Headers 傳遞元數據（模型、種子、尺寸等）
+- Base64 編碼支持批量生成
+- ObjectURL 本地緩存優化
+
+**📦 新增功能**
+- 圖片字節流式傳輸
+- 自定義文件名下載
+- Content-Disposition 頭部設置
+- 前端 Blob 轉換處理
+
+**🐛 修復問題**
+- 修復歷史記錄存儲 Blob URL
+- 優化內存釋放機制
+- 改進錯誤處理邏輯
+
+---
 
 #### v9.5.1-fixed (2025-12-17)
-- ✅ 修復 CSP 內聯事件錯誤
-- ✅ 添加 Favicon（避免 404）
-- ✅ 修復生成結果顯示問題
-- ✅ 優化歷史記錄顯示
-- ✅ 改進錯誤處理
+**✅ Bug 修復**
+- ✅ 修復 CSP 內聯事件錯誤（移除所有 `onclick` 等內聯事件）
+- ✅ 添加 Favicon（避免 404 錯誤）
+- ✅ 修復生成結果不顯示問題
+- ✅ 優化歷史記錄顯示邏輯
 
-#### v9.5.0
-- 🎨 添加 4 個官方模型支持
-- 🌐 完整 Web UI 界面
-- 🚀 智能參數優化
-- 🖼️ 圖生圖功能
-- 💾 本地歷史記錄
+**🎨 UI 改進**
+- 改進生成結果展示動畫
+- 添加"剛剛生成"標籤
+- 優化成功提示樣式
+- 改進錯誤提示顯示
+
+**🔧 代碼優化**
+- 移除所有內聯 JavaScript
+- 改進事件監聽器綁定
+- 優化 CSS 樣式結構
+- 清理冗餘代碼
+
+---
+
+#### v9.5.0 (2025-12-16)
+**🎉 首次發布**
+
+**核心功能**
+- 支持 4 個官方模型（Z-Image Turbo、Flux、Flux Turbo、Kontext）
+- 完整的 Web UI 界面（三欄式佈局）
+- 智能參數優化系統
+- HD 高清增強功能
+- 8+ 種藝術風格預設
+
+**多語言支持**
+- 自動中文翻譯（基於 Cloudflare Workers AI）
+- 中英雙語界面
+- 支持中文提示詞輸入
+
+**圖像處理**
+- 文生圖功能
+- 圖生圖功能（Kontext 模型）
+- 多張參考圖像支持
+- 自定義尺寸預設
+
+**本地存儲**
+- 歷史記錄自動保存（localStorage）
+- 最多保存 100 條記錄
+- 導出/導入功能
+- 一鍵清空
+
+**進階功能**
+- 自動參數優化
+- 複雜度分析
+- 質量模式選擇（經濟/標準/超高清）
+- Seed 控制
+- 批量生成（1-4 張）
+
+**安全性**
+- 可選 API Key 認證
+- 匿名模式支持
+- 環境變量安全配置
+- CORS 跨域支持
+
+**部署**
+- Cloudflare Workers 部署
+- 全球邊緣網絡加速
+- 免費額度支持
+- 自定義域名
+
+---
+
+### 🔮 未來計劃
+
+#### v10.0 (計劃中)
+- [ ] 更多模型支持（SDXL、DALL-E 3）
+- [ ] 批量下載功能
+- [ ] 圖片編輯工具
+- [ ] 自定義風格訓練
+- [ ] 團隊協作功能
+
+#### v10.1 (規劃中)
+- [ ] 視頻生成支持
+- [ ] 3D 模型生成
+- [ ] AI 圖片放大
+- [ ] 移動端優化
+
+#### v11.0 (遠期)
+- [ ] API 接口開放
+- [ ] 插件系統
+- [ ] 雲端同步
+- [ ] 多用戶支持
+
+[查看完整更新記錄](CHANGELOG.md)
+
+---
+
+### 📊 版本對比
+
+| 版本 | 發布日期 | 主要特性 | 破壞性更改 |
+|------|---------|---------|-----------|
+| 9.5.2-bytes | 2025-12-17 | 返回圖片字節 | ✅ 是 |
+| 9.5.1-fixed | 2025-12-17 | 修復 CSP 錯誤 | ❌ 否 |
+| 9.5.0 | 2025-12-16 | 首次發布 | - |
+
+---
 
 ### 📄 許可證
 
@@ -270,11 +395,20 @@ MIT License
 
 歡迎提交 Issue 和 Pull Request！
 
+**貢獻指南**
+1. Fork 本項目
+2. 創建 feature 分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 開啟 Pull Request
+
 ### 🔗 相關鏈接
 
 - [Pollinations.ai](https://pollinations.ai/)
 - [Cloudflare Workers](https://workers.cloudflare.com/)
 - [項目主頁](https://github.com/yourusername/flux-ai-pro)
+- [完整更新記錄](CHANGELOG.md)
+- [問題反饋](https://github.com/yourusername/flux-ai-pro/issues)
 
 ---
 
@@ -320,6 +454,12 @@ MIT License
   - Official API Key support
   - Anonymous mode available
   - Environment variable configuration
+
+- 🆕 **Image Bytes Return** (v9.5.2-bytes)
+  - Direct binary data response
+  - No exposed Pollinations URL
+  - Single/batch generation support
+  - Metadata via HTTP Headers
 
 ### 📦 Tech Stack
 
@@ -372,158 +512,28 @@ https://flux-ai-pro.your-subdomain.workers.dev
 
 text
 
-### ⚙️ Configuration
-
-#### Basic wrangler.toml
-
-name = "flux-ai-pro"
-main = "worker.js"
-compatibility_date = "2024-12-17"
-
-[ai]
-binding = "AI"
-
-[limits]
-cpu_ms = 50000
-
-compatibility_flags = ["nodejs_compat"]
-
-text
-
-#### Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `POLLINATIONS_API_KEY` | Pollinations.ai API Key | No |
-
-### 🎨 Usage
-
-#### 1. Basic Generation
-
-1. Enter prompt (Chinese supported)
-2. Select model and size
-3. Choose style (optional)
-4. Click "Start Generation"
-
-#### 2. Advanced Options
-
-- **Seed**: Set random seed (-1 for random)
-- **Number**: 1-4 images
-- **Auto Optimize**: Smart parameter adjustment
-- **HD Enhancement**: Auto quality boost
-
-#### 3. Image-to-Image (Kontext)
-
-1. Select Kontext model
-2. Enter image URL in "Reference Images"
-3. Describe desired changes in prompt
-4. Generate
-
-#### 4. History
-
-- Auto-save all generation records
-- Click "Reuse" to quickly reuse parameters
-- Click image to view full size
-- Download images locally
-
-### 📊 Model Comparison
-
-| Model | Speed | Quality | Parameters | Price* | Features |
-|-------|-------|---------|------------|--------|----------|
-| Z-Image Turbo | ⚡⚡⚡ | ⭐⭐⭐ | 6B | 0.0002 | Lightning fast |
-| Flux Standard | ⚡⚡ | ⭐⭐⭐⭐ | - | 0.00012 | Balanced |
-| Flux Turbo | ⚡⚡⚡ | ⭐⭐⭐ | - | 0.0003 | Fast |
-| Kontext | ⚡ | ⭐⭐⭐⭐⭐ | - | 0.04 | Image-to-image |
-
-*Price unit: Pollen credits
-
-### 🎯 Quality Modes
-
-| Mode | Min Resolution | Steps Multiplier | Use Case |
-|------|----------------|------------------|----------|
-| Economy | 1024px | 0.85x | Quick preview |
-| Standard | 1280px | 1.0x | Daily use |
-| Ultra HD | 1536px | 1.35x | High quality |
-
-### 🎨 Built-in Styles
-
-- Anime ✨
-- Photorealistic 📷
-- Oil Painting 🎨
-- Watercolor 💧
-- Cyberpunk 🌃
-- Fantasy 🐉
-- Studio Ghibli 🍃
-
-### 📐 Size Presets
-
-- Square: 1024x1024, 1536x1536, 2048x2048
-- Portrait: 1080x1920 (9:16)
-- Landscape: 1920x1080 (16:9)
-- Instagram: 1080x1080
-- Wallpaper: 1920x1080 (Full HD)
-
-### 🔧 Development
-
-#### Local Development
-
-Start dev server
-wrangler dev
-
-View logs
-wrangler tail
-
-List deployments
-wrangler deployments list
-
-text
-
-#### File Structure
-
-flux-ai-pro/
-├── worker.js # Main program
-├── wrangler.toml # Cloudflare config
-├── README.md # Documentation
-└── package.json # Dependencies (optional)
-
-text
-
-### 🐛 FAQ
-
-#### Q: Image generation fails?
-A: Check network connection, ensure prompt is not empty, try different model.
-
-#### Q: Chinese translation not working?
-A: Make sure Workers AI is bound in `wrangler.toml`:
-[ai]
-binding = "AI"
-
-text
-
-#### Q: How to use API Key?
-A: Run this command to set it:
-wrangler secret put POLLINATIONS_API_KEY
-
-text
-
-#### Q: History records lost?
-A: History is saved in browser localStorage, clearing browser data will lose records.
-
 ### 📜 Changelog
+
+#### v9.5.2-bytes (2025-12-17) 🎉 Latest
+- ✅ **Image bytes response**: Returns binary data instead of URLs
+- ✅ Dual response mode: Single image / Batch generation
+- ✅ HTTP Headers metadata transmission
+- ✅ Base64 encoding support
+- ✅ Optimized memory handling
 
 #### v9.5.1-fixed (2025-12-17)
 - ✅ Fixed CSP inline event errors
 - ✅ Added Favicon (avoid 404)
 - ✅ Fixed generation result display
 - ✅ Improved history display
-- ✅ Enhanced error handling
 
-#### v9.5.0
-- 🎨 Added 4 official model support
+#### v9.5.0 (2025-12-16)
+- 🎉 Initial release
+- 🎨 4 official model support
 - 🌐 Complete Web UI interface
 - 🚀 Smart parameter optimization
-- 🖼️ Image-to-image feature
-- 💾 Local history records
+
+[View Full Changelog](CHANGELOG.md)
 
 ### 📄 License
 
@@ -538,6 +548,7 @@ Issues and Pull Requests are welcome!
 - [Pollinations.ai](https://pollinations.ai/)
 - [Cloudflare Workers](https://workers.cloudflare.com/)
 - [Project Homepage](https://github.com/yourusername/flux-ai-pro)
+- [Full Changelog](CHANGELOG.md)
 
 ---
 
@@ -547,3 +558,48 @@ Issues and Pull Requests are welcome!
 
 ⭐ Star this repo if you find it helpful!
 
+[Report Bug](https://github.com/yourusername/flux-ai-pro/issues) · [Request Feature](https://github.com/yourusername/flux-ai-pro/issues) · [Discussions](https://github.com/yourusername/flux-ai-pro/discussions)
+
+</div>
+🎯 主要改動
+✅ 新增內容
+頂部添加版本標籤
+
+顯示當前版本號
+
+標注最新更新特性
+
+更新記錄章節
+
+詳細的版本歷史
+
+每個版本的主要特性
+
+分類清晰（Bug 修復、新功能、技術改進）
+
+版本對比表格
+
+一目了然的版本對比
+
+標注破壞性更改
+
+未來計劃
+
+Roadmap 路線圖
+
+讓用戶了解項目方向
+
+相關鏈接
+
+添加 CHANGELOG.md 鏈接
+
+便於查看完整更新記錄
+
+📝 結構優化
+更新記錄放在「常見問題」之後
+
+中英文版本都包含更新記錄
+
+保持格式統一，易於閱讀
+
+這樣用戶可以在 README 中直接看到最近的更新，同時可以點擊查看完整的 CHANGELOG.md！🚀
